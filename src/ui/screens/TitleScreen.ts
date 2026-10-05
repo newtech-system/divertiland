@@ -18,19 +18,19 @@ export class TitleScreen extends Screen {
 
     return h(
       'div',
-      { class: 'screen title-screen' },
+      { class: 'screen title-screen scrollable' },
       ...floaties,
       h(
         'div',
         { class: 'row center', style: 'gap:2vw' },
-        h('div', { style: 'animation: bob 2.6s ease-in-out infinite' }, portraitImg(g.mascotPortrait('jhow'), 'jhow', 120)),
+        h('div', { class: 'title-mascot', style: 'animation: bob 2.6s ease-in-out infinite' }, portraitImg(g.mascotPortrait('jhow'), 'jhow')),
         h(
           'div',
           { class: 'logo' },
           h('div', { class: 'logo-main' }, 'DIVERTILAND'),
           h('div', { class: 'logo-sub' }, 'O Mundo da Diversão'),
         ),
-        h('div', { style: 'animation: bob 2.6s ease-in-out infinite .6s' }, portraitImg(g.mascotPortrait('mina'), 'mina', 120)),
+        h('div', { class: 'title-mascot', style: 'animation: bob 2.6s ease-in-out infinite .6s' }, portraitImg(g.mascotPortrait('mina'), 'mina')),
       ),
       h('div', { style: 'height:18px' }),
       btn(g, 'JOGAR', {

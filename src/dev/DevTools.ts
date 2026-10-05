@@ -5,6 +5,7 @@ import { ALL_LEVELS } from '../data/worlds';
 import { ProgressionManager } from '../systems/ProgressionManager';
 import { h } from '../ui/dom';
 import { QA_ROUTES } from './qaRoutes';
+import { fitAll, fitCheck, fitGame } from './fitCheck';
 
 /**
  * FERRAMENTAS DE DESENVOLVIMENTO (seção 47) — só existem no modo dev (`npm run dev`);
@@ -87,6 +88,9 @@ export function installDevTools(game: GameManager) {
   (window as any).__DL = game;
   (window as any).sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   (window as any).__routes = QA_ROUTES;
+  (window as any).__fitCheck = () => fitCheck();
+  (window as any).__fitAll = () => fitAll(game);
+  (window as any).__fitGame = () => fitGame(game);
   /** QA: roda todas as rotas em todos os estilos e devolve um relatório. */
   (window as any).__qaAll = async (diffs: DifficultyId[] = ['sloth', 'monkey', 'jaguar']) => {
     const report: Record<string, unknown> = {};

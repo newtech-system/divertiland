@@ -27,7 +27,7 @@ export class ResultsScreen extends Screen {
 
   build(): HTMLElement {
     this.panel = h('div', { class: 'panel' });
-    return h('div', { class: 'screen results' }, this.panel);
+    return h('div', { class: 'screen results scrollable' }, this.panel);
   }
 
   onShow() {

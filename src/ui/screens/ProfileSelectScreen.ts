@@ -37,7 +37,7 @@ export class ProfileSelectScreen extends Screen {
     }
     return h(
       'div',
-      { class: 'screen center', style: 'gap:22px;padding:20px;overflow-y:auto' },
+      { class: 'screen center scrollable', style: 'gap:var(--gap);padding:calc(var(--pad) + var(--safe-top)) 16px calc(var(--pad) + var(--safe-bottom))' },
       h('h1', { class: 'title-xl' }, 'Quem vai jogar?'),
       h('div', { class: 'profiles-grid' }, ...cards),
       btn(g, null, { icon: '⬅️', cls: 'round ghost', aria: 'Voltar', sound: 'back', onClick: () => g.goTitle() }),

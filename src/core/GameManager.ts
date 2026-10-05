@@ -5,6 +5,7 @@ import { PortraitFactory } from '../engine/PortraitFactory';
 import { Renderer } from '../engine/Renderer';
 import { Showroom } from '../engine/Showroom';
 import { InputManager } from '../input/InputManager';
+import { pollViewport } from '../ui/viewport';
 import { getDifficultyParams } from '../data/difficulty';
 import { getLevel } from '../data/worlds';
 import { createRuntime, hasContent } from '../levels/registry';
@@ -99,6 +100,7 @@ export class GameManager {
     const dt = Math.min(0.05, (now - this.last) / 1000);
     this.last = now;
     this.fps = this.fps * 0.95 + (1 / Math.max(1e-3, dt)) * 0.05;
+    pollViewport(now);
     this.input.update();
     try {
       if (this.input.state.pressed.has('pause') && (this.state === 'level' || this.paused)) {

@@ -25,7 +25,7 @@ export class ProfileCreateScreen extends Screen {
     this.stageEl = h('div', { class: 'stage' }, h('div', { class: 'stage-floor' }));
     this.body = h('div', { class: 'col center', style: 'width:100%' });
     this.dots = h('div', { class: 'step-dots' });
-    const el = h('div', { class: 'screen create-screen' }, this.dots, this.stageEl, this.body);
+    const el = h('div', { class: 'screen create-screen scrollable' }, this.dots, this.stageEl, this.body);
     this.render();
     return el;
   }
@@ -80,7 +80,7 @@ export class ProfileCreateScreen extends Screen {
                 this.render();
               },
             },
-            portraitImg(g.mascotPortrait(c), c, 76),
+            portraitImg(g.mascotPortrait(c), c),
             CHARACTERS[c].name,
             h('small', null, CHARACTERS[c].tagline),
           ),

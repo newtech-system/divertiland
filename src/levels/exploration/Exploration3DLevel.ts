@@ -417,7 +417,11 @@ export class Exploration3DLevel implements LevelRuntime {
 
   render(): void {
     const r = this.host.renderer;
-    this.camera.aspect = r.width / Math.max(1, r.height);
+    const aspect = r.width / Math.max(1, r.height);
+    this.camera.aspect = aspect;
+    // Celular em pé: abre o campo de visão para enxergar o caminho à frente
+    // (senão a tela fica "apertada" e a criança não vê para onde ir).
+    this.camera.fov = aspect < 1 ? Math.min(82, 62 + (1 - aspect) * 34) : 62;
     this.camera.updateProjectionMatrix();
     this.particles.setViewportHeight(r.height);
     r.renderFull(this.scene, this.camera);

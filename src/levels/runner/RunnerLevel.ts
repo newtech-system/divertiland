@@ -332,7 +332,10 @@ export class RunnerLevel implements LevelRuntime {
     this.camPos.z = want.z;
     this.camera.position.copy(this.camPos);
     this.camera.lookAt(b.pos.x * 0.4, b.pos.y * 0.5 + 1.2, b.pos.z + 7);
-    this.camera.aspect = r.width / Math.max(1, r.height);
+    const aspect = r.width / Math.max(1, r.height);
+    this.camera.aspect = aspect;
+    // Em pé, abre o campo de visão para dar tempo de ver os obstáculos chegando.
+    this.camera.fov = aspect < 1 ? Math.min(86, 64 + (1 - aspect) * 34) : 64;
     this.camera.updateProjectionMatrix();
     this.particles.setViewportHeight(r.height);
     r.renderFull(this.scene, this.camera);

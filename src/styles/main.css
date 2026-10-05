@@ -26,6 +26,27 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Tamanho REAL da área visível (ui/viewport.ts atualiza em px). Os valores abaixo são
+     só a reserva para o primeiro quadro, antes do JS medir. */
+  --app-w: 100vw;
+  --app-h: 100vh;
+  --app-min: 100vw;
+
+  /* Tamanhos que encolhem junto com a tela: tudo cabe em qualquer celular,
+     sem nunca ficar menor que o mínimo confortável para o dedo de uma criança. */
+  --btn-h: clamp(46px, calc(var(--app-h) * 0.135), 60px);
+  --btn-fs: clamp(15px, calc(var(--app-h) * 0.045), 22px);
+  --btn-px: clamp(14px, calc(var(--app-h) * 0.055), 28px);
+  --btn-big-h: clamp(54px, calc(var(--app-h) * 0.165), 78px);
+  --btn-big-fs: clamp(19px, calc(var(--app-h) * 0.058), 30px);
+  --btn-big-px: clamp(20px, calc(var(--app-h) * 0.085), 44px);
+  --btn-small-h: clamp(44px, calc(var(--app-h) * 0.105), 48px);
+  --btn-small-fs: clamp(13px, calc(var(--app-h) * 0.035), 18px);
+  --round: clamp(46px, calc(var(--app-h) * 0.135), 64px);
+  --portrait: clamp(40px, calc(var(--app-h) * 0.165), 96px);
+  --gap: clamp(6px, calc(var(--app-h) * 0.028), 16px);
+  --pad: clamp(8px, calc(var(--app-h) * 0.03), 22px);
 }
 
 * {
@@ -49,7 +70,12 @@ body {
 
 #app {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  /* Nunca passa da área visível (barra do navegador e teclado ficam por cima em celular). */
+  width: var(--app-w);
+  height: var(--app-h);
+  overflow: hidden;
 }
 
 #game-canvas {
@@ -74,7 +100,22 @@ body {
   inset: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   animation: screenIn 0.35s ease-out;
+}
+
+/* Rede de segurança: se ainda assim o conteúdo for maior que a tela, dá para rolar
+   (e "safe center" garante que o topo nunca fique inalcançável). */
+.screen.scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  justify-content: center;
+  justify-content: safe center;
+  -webkit-overflow-scrolling: touch;
+}
+.screen.scrollable > * {
+  flex-shrink: 0;
 }
 
 .screen.passthrough {
@@ -96,12 +137,12 @@ body {
 .btn {
   font-family: var(--font);
   font-weight: 700;
-  font-size: 22px;
+  font-size: var(--btn-fs);
   border: none;
   border-radius: 999px;
-  padding: 14px 28px;
-  min-height: 60px;
-  min-width: 60px;
+  padding: 8px var(--btn-px);
+  min-height: var(--btn-h);
+  min-width: var(--btn-h);
   color: #fff;
   background: var(--purple);
   box-shadow: 0 6px 0 var(--purple-d), 0 10px 18px rgba(0, 0, 0, 0.18);
@@ -129,21 +170,29 @@ body {
   line-height: 1;
 }
 .btn.big {
-  font-size: 30px;
-  padding: 18px 44px;
-  min-height: 78px;
+  font-size: var(--btn-big-fs);
+  padding: 10px var(--btn-big-px);
+  min-height: var(--btn-big-h);
 }
 .btn.small {
-  font-size: 18px;
-  padding: 8px 18px;
-  min-height: 48px;
+  font-size: var(--btn-small-fs);
+  padding: 6px 16px;
+  min-height: var(--btn-small-h);
+  min-width: var(--btn-small-h);
 }
 .btn.round {
   padding: 0;
-  width: 64px;
-  height: 64px;
+  width: var(--round);
+  height: var(--round);
+  min-height: 0;
+  min-width: 0;
   border-radius: 50%;
-  font-size: 30px;
+  font-size: calc(var(--round) * 0.46);
+}
+.btn.round.small {
+  width: var(--btn-small-h);
+  height: var(--btn-small-h);
+  font-size: calc(var(--btn-small-h) * 0.46);
 }
 .btn.green {
   background: var(--green);
@@ -191,22 +240,22 @@ body {
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.95);
   color: var(--ink);
   font-weight: 700;
-  font-size: 22px;
+  font-size: clamp(15px, calc(var(--app-h) * 0.045), 22px);
   border-radius: 999px;
-  padding: 6px 16px 6px 8px;
+  padding: 4px 14px 4px 6px;
   box-shadow: 0 4px 0 rgba(42, 20, 87, 0.2);
 }
 .pill .ico {
-  font-size: 28px;
+  font-size: clamp(20px, calc(var(--app-h) * 0.06), 28px);
   line-height: 1;
 }
 
 .title-xl {
-  font-size: clamp(36px, 7vw, 72px);
+  font-size: clamp(26px, min(7vw, calc(var(--app-h) * 0.12)), 72px);
   font-weight: 700;
   color: #fff;
   text-shadow: 0 5px 0 var(--purple-d), 0 10px 30px rgba(0, 0, 0, 0.25);
@@ -216,14 +265,14 @@ body {
   line-height: 1;
 }
 .title-l {
-  font-size: clamp(26px, 4.5vw, 42px);
+  font-size: clamp(20px, min(4.5vw, calc(var(--app-h) * 0.08)), 42px);
   font-weight: 700;
   margin: 0;
   text-align: center;
   line-height: 1.1;
 }
 .subtitle {
-  font-size: clamp(18px, 3vw, 24px);
+  font-size: clamp(14px, min(3vw, calc(var(--app-h) * 0.05)), 24px);
   color: #fff;
   text-align: center;
   opacity: 0.95;
@@ -255,8 +304,8 @@ body {
 .title-screen {
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 24px;
+  gap: var(--gap);
+  padding: calc(var(--pad) + var(--safe-top)) calc(var(--pad) + var(--safe-right)) calc(var(--pad) + var(--safe-bottom)) calc(var(--pad) + var(--safe-left));
   background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.25), transparent 60%);
 }
 .logo {
@@ -266,7 +315,7 @@ body {
   animation: bob 3s ease-in-out infinite;
 }
 .logo .logo-main {
-  font-size: clamp(54px, 12vw, 120px);
+  font-size: clamp(30px, min(11vw, calc(var(--app-h) * 0.2)), 120px);
   font-weight: 700;
   line-height: 0.9;
   background: linear-gradient(180deg, #fff 0%, #ffe9a8 60%, #ffd60a 100%);
@@ -277,14 +326,28 @@ body {
   letter-spacing: 2px;
 }
 .logo .logo-sub {
-  font-size: clamp(20px, 4vw, 34px);
+  font-size: clamp(13px, min(3.6vw, calc(var(--app-h) * 0.062)), 34px);
   color: #fff;
   font-weight: 600;
   background: var(--pink);
-  padding: 4px 22px;
+  padding: 2px clamp(10px, 3vw, 22px);
   border-radius: 999px;
-  margin-top: 10px;
+  margin-top: clamp(2px, 1vh, 10px);
   box-shadow: 0 5px 0 #b8106a;
+}
+/* Mascotes ao lado do logo: somem se a tela for muito estreita. */
+.title-mascot .portrait {
+  width: clamp(44px, min(16vw, calc(var(--app-h) * 0.26)), 120px);
+  height: clamp(44px, min(16vw, calc(var(--app-h) * 0.26)), 120px);
+}
+/* Celular em pé e estreito: o logo fica sozinho na primeira linha e os mascotes
+   aparecem embaixo, lado a lado (aproveita o espaço vertical de sobra). */
+body.narrow.em-pe .title-screen .row {
+  flex-wrap: wrap;
+}
+body.narrow.em-pe .title-screen .logo {
+  order: -1;
+  flex-basis: 100%;
 }
 @keyframes bob {
   0%,
@@ -297,7 +360,7 @@ body {
 }
 .floaty {
   position: absolute;
-  font-size: 46px;
+  font-size: clamp(22px, calc(var(--app-min) * 0.09), 46px);
   animation: floaty 6s ease-in-out infinite;
   opacity: 0.9;
   pointer-events: none;
@@ -349,8 +412,8 @@ body {
   transform: scale(0.96);
 }
 .profile-card .portrait {
-  width: 96px;
-  height: 96px;
+  width: clamp(54px, calc(var(--app-h) * 0.18), 96px);
+  height: clamp(54px, calc(var(--app-h) * 0.18), 96px);
 }
 .profile-card .meta {
   font-size: 16px;
@@ -366,6 +429,8 @@ body {
   min-height: 170px;
 }
 .portrait {
+  width: var(--portrait);
+  height: var(--portrait);
   border-radius: 50%;
   background: radial-gradient(circle at 50% 35%, #fff4d9, #ffb36b);
   object-fit: cover;
@@ -374,15 +439,15 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: calc(var(--portrait) * 0.45);
   flex-shrink: 0;
 }
 
 /* criação de perfil */
 .create-screen {
-  padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
+  padding: calc(var(--pad) + var(--safe-top)) calc(12px + var(--safe-right)) calc(var(--pad) + var(--safe-bottom)) calc(12px + var(--safe-left));
   align-items: center;
-  gap: 12px;
+  gap: var(--gap);
 }
 .step-dots {
   display: flex;
@@ -400,8 +465,9 @@ body {
 }
 .stage {
   position: relative;
-  flex: 1;
-  min-height: 200px;
+  /* Encolhe à vontade: é o personagem 3D que cede espaço, nunca os botões. */
+  flex: 1 1 auto;
+  min-height: clamp(60px, calc(var(--app-h) * 0.22), 260px);
   width: 100%;
   pointer-events: auto;
 }
@@ -418,17 +484,18 @@ body {
 }
 .char-choice {
   display: flex;
-  gap: 18px;
+  gap: clamp(8px, 2vw, 18px);
   justify-content: center;
+  flex-wrap: wrap;
 }
 .char-btn {
-  width: min(40vw, 220px);
-  border-radius: 28px;
+  width: clamp(120px, min(40vw, calc(var(--app-h) * 0.62)), 220px);
+  border-radius: 24px;
   border: 5px solid transparent;
   background: #fff;
-  padding: 10px 10px 14px;
+  padding: clamp(4px, 1.4vh, 10px) 10px clamp(6px, 1.6vh, 14px);
   font-family: var(--font);
-  font-size: 26px;
+  font-size: clamp(17px, calc(var(--app-h) * 0.055), 26px);
   font-weight: 700;
   color: var(--ink);
   box-shadow: var(--shadow);
@@ -438,8 +505,12 @@ body {
   align-items: center;
   gap: 4px;
 }
+.char-btn .portrait {
+  width: clamp(40px, calc(var(--app-h) * 0.16), 76px);
+  height: clamp(40px, calc(var(--app-h) * 0.16), 76px);
+}
 .char-btn small {
-  font-size: 15px;
+  font-size: clamp(11px, calc(var(--app-h) * 0.032), 15px);
   color: var(--ink-soft);
   font-weight: 500;
 }
@@ -450,12 +521,12 @@ body {
 }
 .name-input {
   font-family: var(--font);
-  font-size: 32px;
+  font-size: clamp(19px, calc(var(--app-h) * 0.07), 32px);
   font-weight: 700;
   text-align: center;
   border: 5px solid var(--yellow);
-  border-radius: 24px;
-  padding: 12px 18px;
+  border-radius: 20px;
+  padding: clamp(6px, 1.6vh, 12px) 18px;
   width: min(420px, 86vw);
   color: var(--ink);
   outline: none;
@@ -464,27 +535,35 @@ body {
 }
 .name-suggestions {
   display: flex;
-  gap: 10px;
+  gap: clamp(5px, 1.2vh, 10px);
   flex-wrap: wrap;
   justify-content: center;
   max-width: 620px;
+  max-height: clamp(52px, calc(var(--app-h) * 0.26), 140px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* dificuldade */
+/* Em tela baixa, a explicação some: o ícone e o nome já dizem tudo. */
+body.short .diff-btn .desc {
+  display: none;
+}
 .diff-choice {
   display: flex;
-  gap: 14px;
+  gap: clamp(6px, 1.6vw, 14px);
   justify-content: center;
   flex-wrap: wrap;
 }
 .diff-btn {
   font-family: var(--font);
   border: 5px solid transparent;
-  border-radius: 28px;
+  border-radius: 24px;
   background: #fff;
-  padding: 12px 14px;
-  width: min(30vw, 200px);
-  min-width: 140px;
+  padding: clamp(5px, 1.5vh, 12px) clamp(8px, 1.6vw, 14px);
+  /* Os três estilos sempre cabem lado a lado, até em celular dobrável (280px). */
+  width: clamp(76px, min(29vw, calc(var(--app-h) * 0.56)), 200px);
+  min-width: 0;
   cursor: pointer;
   box-shadow: var(--shadow);
   display: flex;
@@ -494,17 +573,17 @@ body {
   transition: transform 0.12s;
 }
 .diff-btn .emoji {
-  font-size: 58px;
+  font-size: clamp(28px, calc(var(--app-h) * 0.13), 58px);
   line-height: 1.1;
 }
 .diff-btn .name {
-  font-size: 20px;
+  font-size: clamp(13px, calc(var(--app-h) * 0.042), 20px);
   font-weight: 700;
   text-align: center;
   line-height: 1.1;
 }
 .diff-btn .desc {
-  font-size: 14px;
+  font-size: clamp(11px, calc(var(--app-h) * 0.03), 14px);
   color: var(--ink-soft);
   text-align: center;
   margin-top: 4px;
@@ -549,15 +628,15 @@ body {
   gap: 8px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 999px;
-  padding: 4px 16px 4px 4px;
+  padding: 4px 14px 4px 4px;
   box-shadow: 0 4px 0 rgba(42, 20, 87, 0.2);
   font-weight: 700;
-  font-size: 20px;
+  font-size: clamp(14px, calc(var(--app-h) * 0.042), 20px);
   cursor: pointer;
 }
 .map-top .who .portrait {
-  width: 52px;
-  height: 52px;
+  width: clamp(36px, calc(var(--app-h) * 0.11), 52px);
+  height: clamp(36px, calc(var(--app-h) * 0.11), 52px);
   border-width: 3px;
 }
 .map-scroll {
@@ -606,13 +685,13 @@ body {
   z-index: 2;
 }
 .map-node .bubble {
-  width: 92px;
-  height: 92px;
+  width: clamp(64px, calc(var(--app-min) * 0.2), 92px);
+  height: clamp(64px, calc(var(--app-min) * 0.2), 92px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 46px;
+  font-size: clamp(32px, calc(var(--app-min) * 0.1), 46px);
   background: #fff;
   border: 6px solid var(--purple);
   box-shadow: 0 7px 0 var(--purple-d), 0 12px 24px rgba(0, 0, 0, 0.25);
@@ -859,14 +938,14 @@ body {
   cursor: pointer;
 }
 .speech .portrait {
-  width: 74px;
-  height: 74px;
+  width: clamp(44px, calc(var(--app-h) * 0.15), 74px);
+  height: clamp(44px, calc(var(--app-h) * 0.15), 74px);
 }
 .speech .bubble {
   background: #fff;
   border-radius: 24px 24px 24px 6px;
-  padding: 12px 18px;
-  font-size: 21px;
+  padding: clamp(7px, 1.6vh, 12px) clamp(11px, 2.5vw, 18px);
+  font-size: clamp(14px, calc(var(--app-h) * 0.05), 21px);
   font-weight: 600;
   line-height: 1.2;
   box-shadow: var(--shadow);
@@ -1050,14 +1129,14 @@ body {
   gap: 6px;
 }
 .hud-obj {
-  width: 46px;
-  height: 46px;
+  width: clamp(34px, calc(var(--app-min) * 0.1), 46px);
+  height: clamp(34px, calc(var(--app-min) * 0.1), 46px);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: clamp(17px, calc(var(--app-min) * 0.052), 24px);
   position: relative;
   box-shadow: 0 3px 0 rgba(42, 20, 87, 0.2);
 }
@@ -1082,8 +1161,8 @@ body {
 }
 .hud-mission {
   margin: 0 auto;
-  font-size: 19px;
-  max-width: 48vw;
+  font-size: clamp(13px, calc(var(--app-h) * 0.042), 19px);
+  max-width: 44vw;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1126,15 +1205,15 @@ body {
 }
 .hud-prompt {
   position: absolute;
-  right: calc(24px + var(--safe-right));
-  bottom: calc(150px + var(--safe-bottom));
-  width: 96px;
-  height: 96px;
+  right: calc(clamp(12px, 3vw, 24px) + var(--safe-right));
+  bottom: calc(clamp(76px, calc(var(--app-min) * 0.3), 150px) + var(--safe-bottom));
+  width: clamp(66px, calc(var(--app-min) * 0.22), 96px);
+  height: clamp(66px, calc(var(--app-min) * 0.22), 96px);
   border-radius: 50%;
   background: var(--yellow);
   border: 5px solid #fff;
   box-shadow: 0 6px 0 #c9a300, 0 0 24px rgba(255, 214, 10, 0.8);
-  font-size: 46px;
+  font-size: clamp(28px, calc(var(--app-min) * 0.1), 46px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1249,10 +1328,10 @@ body {
 }
 .joy-hint {
   position: absolute;
-  left: calc(40px + var(--safe-left));
-  bottom: calc(40px + var(--safe-bottom));
-  width: 130px;
-  height: 130px;
+  left: calc(clamp(18px, 5vw, 40px) + var(--safe-left));
+  bottom: calc(clamp(18px, 5vh, 40px) + var(--safe-bottom));
+  width: clamp(84px, calc(var(--app-min) * 0.3), 130px);
+  height: clamp(84px, calc(var(--app-min) * 0.3), 130px);
   border-radius: 50%;
   border: 4px dashed rgba(255, 255, 255, 0.55);
   pointer-events: none;
@@ -1277,10 +1356,10 @@ body {
   user-select: none;
 }
 .touch-btn.jump {
-  right: calc(24px + var(--safe-right));
-  bottom: calc(30px + var(--safe-bottom));
-  width: 112px;
-  height: 112px;
+  right: calc(clamp(12px, 3vw, 24px) + var(--safe-right));
+  bottom: calc(clamp(14px, 4vh, 30px) + var(--safe-bottom));
+  width: clamp(76px, calc(var(--app-min) * 0.26), 112px);
+  height: clamp(76px, calc(var(--app-min) * 0.26), 112px);
   background: var(--green);
   box-shadow: 0 7px 0 #138a49;
 }
@@ -1310,7 +1389,7 @@ body {
   margin: 6px 0 4px;
 }
 .result-stars span {
-  font-size: 72px;
+  font-size: clamp(34px, calc(var(--app-h) * 0.17), 72px);
   filter: grayscale(1) brightness(0.75);
   opacity: 0.3;
   transition: all 0.3s;
@@ -1391,22 +1470,26 @@ body {
 /* ---------------------------------------------------------------- loja */
 .shop-screen {
   flex-direction: row;
-  padding: calc(10px + var(--safe-top)) calc(10px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(10px + var(--safe-left));
+  padding: calc(8px + var(--safe-top)) calc(8px + var(--safe-right)) calc(8px + var(--safe-bottom)) calc(8px + var(--safe-left));
   gap: 10px;
+  min-height: 0;
 }
 .shop-left {
   width: 40%;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-width: 260px;
+  min-width: min(260px, 38vw);
+  /* min-height: 0 é o que permite a grade de itens rolar em vez de estourar a tela. */
+  min-height: 0;
 }
 .shop-right {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
+  min-height: 0;
 }
 .shop-tabs {
   display: flex;
@@ -1419,8 +1502,8 @@ body {
   font-family: var(--font);
   border: none;
   border-radius: 20px;
-  padding: 8px 14px;
-  font-size: 17px;
+  padding: 6px clamp(8px, 2vw, 14px);
+  font-size: clamp(12px, calc(var(--app-h) * 0.035), 17px);
   font-weight: 700;
   background: rgba(255, 255, 255, 0.35);
   color: #fff;
@@ -1432,7 +1515,10 @@ body {
   flex-shrink: 0;
 }
 .shop-tab .ico {
-  font-size: 30px;
+  font-size: clamp(20px, calc(var(--app-h) * 0.07), 30px);
+}
+.shop-tabs {
+  flex-shrink: 0;
 }
 .shop-tab.on {
   background: #fff;
@@ -1440,13 +1526,15 @@ body {
   box-shadow: 0 5px 0 rgba(42, 20, 87, 0.25);
 }
 .shop-grid {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(96px, 26vw, 124px), 1fr));
+  gap: clamp(6px, 1.5vw, 12px);
   align-content: start;
-  padding: 4px 4px 120px;
+  padding: 4px 4px calc(var(--btn-h) + 48px);
   touch-action: pan-y;
 }
 .item-card {
@@ -1468,11 +1556,11 @@ body {
   transform: scale(0.95);
 }
 .item-card .i-ico {
-  font-size: 50px;
+  font-size: clamp(32px, calc(var(--app-h) * 0.1), 50px);
   line-height: 1.15;
 }
 .item-card .i-name {
-  font-size: 15px;
+  font-size: clamp(12px, calc(var(--app-h) * 0.034), 15px);
   font-weight: 700;
   line-height: 1.1;
   min-height: 2.2em;
@@ -1558,21 +1646,23 @@ body {
 .setting-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 4px;
-  font-size: 19px;
+  gap: 12px;
+  padding: 6px 4px;
+  min-height: 52px;
+  font-size: clamp(15px, calc(var(--app-h) * 0.042), 19px);
   font-weight: 600;
   border-bottom: 2px solid var(--panel-2);
 }
 .setting-row .ico {
-  font-size: 30px;
-  width: 40px;
+  font-size: clamp(22px, calc(var(--app-h) * 0.06), 30px);
+  width: 34px;
   text-align: center;
 }
 .setting-row input[type='range'] {
   flex: 1;
   accent-color: var(--purple);
-  height: 30px;
+  height: 44px;
+  min-width: 90px;
 }
 .seg {
   display: flex;
@@ -1587,12 +1677,13 @@ body {
   border: none;
   background: transparent;
   border-radius: 99px;
-  padding: 6px 12px;
-  font-size: 16px;
+  padding: 6px clamp(10px, 2.5vw, 16px);
+  font-size: clamp(14px, calc(var(--app-h) * 0.038), 16px);
   font-weight: 700;
   color: var(--ink-soft);
   cursor: pointer;
-  min-height: 40px;
+  min-height: 44px;
+  min-width: 44px;
 }
 .seg button.on {
   background: var(--purple);
@@ -1721,46 +1812,16 @@ body {
 }
 
 /* ---------------------------------------------------------------- responsivo */
-@media (max-width: 760px) {
+/* Celular em pé: a loja empilha (personagem em cima, itens embaixo).
+   Deitado continua lado a lado, que aproveita melhor a altura. */
+@media (orientation: portrait) {
   .shop-screen {
     flex-direction: column;
   }
   .shop-left {
     width: 100%;
     min-width: 0;
-    height: 34%;
-  }
-  .btn.big {
-    font-size: 26px;
-    padding: 14px 34px;
-    min-height: 68px;
-  }
-  .map-node .bubble {
-    width: 82px;
-    height: 82px;
-    font-size: 40px;
-  }
-}
-@media (max-height: 520px) {
-  .speech .portrait {
-    width: 56px;
-    height: 56px;
-  }
-  .speech .bubble {
-    font-size: 18px;
-    padding: 8px 14px;
-  }
-  .result-stars span {
-    font-size: 54px;
-  }
-  .touch-btn.jump {
-    width: 96px;
-    height: 96px;
-  }
-  .hud-prompt {
-    width: 82px;
-    height: 82px;
-    bottom: calc(130px + var(--safe-bottom));
+    flex: 0 0 clamp(120px, 32%, 300px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1813,14 +1874,14 @@ body.reduced-motion *::after {
   box-shadow: var(--shadow);
 }
 .find-slot {
-  width: 58px;
-  height: 58px;
+  width: clamp(40px, calc(var(--app-min) * 0.13), 58px);
+  height: clamp(40px, calc(var(--app-min) * 0.13), 58px);
   border-radius: 50%;
   background: var(--panel-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 34px;
+  font-size: clamp(22px, calc(var(--app-min) * 0.075), 34px);
   position: relative;
   transition: transform 0.2s;
 }
@@ -1890,11 +1951,11 @@ body.reduced-motion *::after {
 .shape-hole,
 .pattern-opt {
   font-family: var(--font);
-  width: 84px;
-  height: 84px;
+  width: clamp(50px, calc(var(--app-min) * 0.16), 84px);
+  height: clamp(50px, calc(var(--app-min) * 0.16), 84px);
   border-radius: 50%;
   border: 5px solid #fff;
-  font-size: 40px;
+  font-size: clamp(24px, calc(var(--app-min) * 0.085), 40px);
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -2007,4 +2068,150 @@ body.reduced-motion *::after {
   .puzzle-status {
     font-size: 18px;
   }
+}
+
+/* ---------------------------------------------------------------- telas pequenas */
+/* Tela baixa (celular deitado): tudo mais junto, nada de espaço desperdiçado. */
+body.short .panel {
+  padding: 14px;
+}
+body.short .objectives {
+  gap: 5px;
+  margin: 8px 0;
+}
+body.short .objective {
+  padding: 5px 10px;
+  font-size: 15px;
+}
+body.short .objective .o-ico {
+  font-size: 22px;
+}
+body.short .reward-line {
+  padding: 4px 12px;
+  font-size: 15px;
+}
+body.short .level-card .big-icon {
+  width: 64px;
+  height: 64px;
+  font-size: 40px;
+  border-radius: 18px;
+}
+body.short .total-divertis {
+  font-size: 30px;
+}
+body.short .unlock-banner {
+  font-size: 16px;
+  padding: 7px 12px;
+}
+body.short .ach-row .a-ico {
+  font-size: 30px;
+  width: 42px;
+}
+body.short .toast {
+  font-size: 17px;
+  padding: 6px 16px 6px 10px;
+}
+body.short .toast .ico {
+  font-size: 24px;
+}
+body.short .profiles-grid {
+  gap: 10px;
+}
+/* Tela muito baixa: o palco 3D cede quase todo o espaço para os botões. */
+body.tiny .stage {
+  min-height: clamp(40px, calc(var(--app-h) * 0.16), 90px);
+}
+body.tiny .char-btn small {
+  display: none;
+}
+body.tiny .step-dots span {
+  width: 10px;
+  height: 10px;
+}
+/* Tela estreita (celular em pé): grades com menos colunas e textos menores. */
+body.narrow .profiles-grid {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+body.narrow .hud-mission {
+  max-width: 100%;
+  font-size: 13px;
+}
+body.narrow .map-top {
+  gap: 6px;
+}
+
+/* O balão de fala no mapa divide o espaço com os botões: encolhe em vez de empurrá-los. */
+.map-bottom .map-speech {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.map-bottom .map-speech .speech {
+  max-width: 100%;
+}
+.map-bottom > .col {
+  flex: 0 0 auto;
+}
+
+/* Tela estreita: botões com menos "gordura" nas laterais, e as fileiras podem quebrar
+   em duas linhas em vez de sair da tela. */
+body.narrow {
+  --btn-px: clamp(10px, 4vw, 20px);
+  --btn-big-px: clamp(14px, 5.5vw, 30px);
+}
+body.narrow .row {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* A missão divide a barra de cima com os outros itens: encolhe com "..." em vez de ser cortada. */
+.hud-mission {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.hud-top .hud-left {
+  flex: 0 0 auto;
+}
+
+/* ------- celular em pé: HUD em duas linhas e balão de fala mais largo ------- */
+body.narrow.em-pe .hud-top {
+  flex-wrap: wrap;
+}
+body.narrow.em-pe .hud-mission {
+  order: 3;
+  flex: 1 0 100%;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  margin-top: 6px;
+}
+body.em-pe .hud.touch .speech {
+  max-width: min(86vw, 460px);
+}
+body.em-pe .hud.touch .hud-speech {
+  right: calc(12px + var(--safe-right));
+}
+
+/* Painéis de fase (objetos escondidos, corrida): quebram em duas linhas quando a tela
+   é estreita, em vez de espremer os ícones até ficarem pequenos para o dedo. */
+.find-bar {
+  border-radius: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(var(--app-w) - 16px);
+}
+
+/* ------- rolar com o dedo -------
+   O jogo bloqueia gestos na página inteira (para o dedo não arrastar a página durante a
+   fase). Estas são as áreas onde rolar com o dedo PRECISA funcionar. */
+.screen.scrollable,
+.modal,
+.modal-back,
+.name-suggestions,
+.shop-tabs,
+.devtools {
+  touch-action: pan-y;
+}
+.shop-tabs {
+  touch-action: pan-x;
 }

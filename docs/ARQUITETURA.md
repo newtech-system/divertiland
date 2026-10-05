@@ -101,3 +101,36 @@ qualidade gráfica ajustável (resolução) nos Ajustes; física própria leve (
 
 - `npm test`: regras do jogo, save (incluindo recuperação de perda), física.
 - No navegador (modo dev): `await __qaAll()` joga as fases 3D com piloto automático nos 3 estilos.
+
+## Encaixe na tela (celulares)
+
+O jogo precisa caber inteiro em qualquer tela, sem botões escondidos:
+
+- **`src/ui/viewport.ts`** mede a área REALMENTE visível (`visualViewport` quando existe, senão
+  `innerWidth/innerHeight`) e publica `--app-w`, `--app-h` e `--app-min` em CSS. Em celular não dá
+  para confiar em `100vh`: a barra do navegador fica por cima, o teclado abre, a tela gira.
+  A medida é reavaliada por `resize`, `orientationchange`, `visualViewport`, `ResizeObserver` e,
+  por garantia, por uma checagem periódica no laço do jogo (`pollViewport`).
+- **`#app` usa `--app-w`/`--app-h`** e o renderizador 3D usa as mesmas medidas, então canvas e
+  interface sempre coincidem com o que aparece.
+- **Tamanhos proporcionais:** botões, títulos, retratos, HUD e painéis usam `clamp()` em função de
+  `--app-h`/`--app-min`, com um mínimo confortável para dedos de criança (44 px).
+- **Classes de tamanho no `<body>`:** `short` (tela baixa), `tiny` (muito baixa), `narrow`
+  (estreita) e `em-pe` (celular em pé) deixam a interface mais compacta quando necessário.
+  (O nome é `em-pe` e não `portrait` para não colidir com a classe `.portrait` dos retratos.)
+- **Rede de segurança:** telas de conteúdo (título, criação de perfil, perfis, resultados) têm
+  `.scrollable`, então mesmo num caso extremo nada fica inalcançável. As áreas roláveis declaram
+  `touch-action` (o resto da página bloqueia gestos para o dedo não arrastar a tela durante a fase).
+- **Câmera 3D:** com a tela em pé o campo de visão abre, para a criança enxergar o caminho.
+
+### Como testar
+
+No modo `npm run dev`, no console do navegador:
+
+```js
+await __fitAll()   // percorre os menus e lista botões cortados/escondidos/pequenos demais
+await __fitGame()  // o mesmo dentro das fases (HUD, controles de toque e painéis)
+```
+
+Tamanhos já verificados sem nenhum problema: 280×653, 320×568, 360×640, 390×844, 568×320,
+640×360, 768×1024, 844×390 e 1280×800.

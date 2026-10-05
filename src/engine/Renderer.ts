@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createLogger } from '../core/Logger';
+import { getViewport, initViewport, onViewportChange } from '../ui/viewport';
 
 const log = createLogger('Renderer');
 
@@ -25,8 +26,10 @@ export class Renderer {
     this.gl.outputColorSpace = THREE.SRGBColorSpace;
     this.gl.setClearColor(0x000000, 0);
     container.appendChild(this.canvas);
-    window.addEventListener('resize', () => this.resize());
-    window.visualViewport?.addEventListener('resize', () => this.resize());
+    // O tamanho vem da área REALMENTE visível (ui/viewport.ts), não de window.innerHeight:
+    // em celular a barra do navegador e o teclado ficam por cima e cortariam o jogo.
+    initViewport();
+    onViewportChange(() => this.resize());
     this.canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
       log.warn('Contexto WebGL perdido — aguardando restauração.');
@@ -44,8 +47,7 @@ export class Renderer {
   }
 
   resize() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const { width: w, height: h } = getViewport();
     this.width = w;
     this.height = h;
     this.gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.pixelRatioCap));

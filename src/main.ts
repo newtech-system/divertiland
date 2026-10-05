@@ -4,10 +4,12 @@ import '@fontsource/fredoka/600.css';
 import '@fontsource/fredoka/700.css';
 import './styles/main.css';
 import { GameManager } from './core/GameManager';
+import { initViewport } from './ui/viewport';
 
 /** Ponto de entrada do Divertiland. */
 async function boot() {
   const app = document.getElementById('app')!;
+  initViewport();
   const game = new GameManager(app);
   if (import.meta.env.DEV) {
     const { installDevTools } = await import('./dev/DevTools');
