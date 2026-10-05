@@ -68,3 +68,18 @@ npm run build     # versão final em dist/
   com um piloto automático e mostra se foram concluídas.
 - Documentação técnica: [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md),
   decisões: [`docs/DECISOES.md`](docs/DECISOES.md), próximos passos: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+## Site publicado
+
+O jogo está no ar em **https://newtech-system.github.io/divertiland/**
+(código em https://github.com/newtech-system/divertiland).
+
+Para publicar uma versão nova depois de mudanças:
+
+```bash
+npm run deploy
+```
+
+Isso gera a versão final e envia para o ramo `gh-pages`; o GitHub Pages atualiza o site em 1–2 minutos.
+Para usar um domínio próprio no futuro (ex.: divertiland.com.br), basta configurá-lo em
+*Settings → Pages* do repositório e apontar o DNS do domínio para o GitHub.
