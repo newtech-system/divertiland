@@ -113,6 +113,7 @@ export class Exploration3DLevel implements LevelRuntime {
         particles: this.particles,
         reward: (n) => (this.bonusDivertis += n),
         finishLevel: () => this.complete(),
+        stageDone: (id) => this.markStage(id),
         onTagged: (n, total) => {
           h.hud.toast('🙌', `Peguei! ${n}/${total}`);
           this.refreshHud();
@@ -352,6 +353,21 @@ export class Exploration3DLevel implements LevelRuntime {
         this.host.audio.play('pop', { volume: 0.35, pitch: 1.3 });
       }
     }
+  }
+
+  /**
+   * ETAPAS INTERNAS DA AVENTURA (seção 8 do V2).
+   * Cada etapa concluída avisa a criança, salva na hora (seção 7.4: "salvar por etapa
+   * interna") e entra no resultado da aventura.
+   */
+  private stagesDone: string[] = [];
+  private markStage(id: string): void {
+    if (!id || this.stagesDone.includes(id)) return;
+    this.stagesDone.push(id);
+    this.host.audio.play('checkpoint');
+    this.host.hud.toast('✅', 'Etapa concluída!');
+    const snap = this.snapshot();
+    if (snap) this.host.checkpoint(snap);
   }
 
   private fadeA = new THREE.Vector3();
@@ -650,6 +666,7 @@ export class Exploration3DLevel implements LevelRuntime {
         this.shownMessages.add(d.id);
         h.hud.say(this.guide, d.text, d.icon);
         if (d.mission) h.hud.setMission('🎯', d.mission);
+        if (typeof d.stage === 'string') this.markStage(d.stage);
         break;
       }
       case 'secret': {
@@ -681,6 +698,7 @@ export class Exploration3DLevel implements LevelRuntime {
         this.respawn();
         break;
       case 'finish':
+        if (this.lvl.finishStage) this.markStage(this.lvl.finishStage);
         this.complete();
         break;
     }
@@ -818,6 +836,7 @@ export class Exploration3DLevel implements LevelRuntime {
       timeSec: this.elapsed,
       flags,
       stats: { trampolineBounces: this.bounces, falls: this.falls },
+      stagesDone: [...this.stagesDone],
     };
   }
 

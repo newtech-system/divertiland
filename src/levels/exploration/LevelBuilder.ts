@@ -89,6 +89,8 @@ export interface PadInfo {
 export interface QuestGateInfo {
   id: string;
   flag: string;
+  /** Etapa interna concluída quando este portão abre (seção 8). */
+  stage?: string;
   open: () => void;
   opened: boolean;
 }
@@ -145,6 +147,8 @@ export interface BuiltLevel {
   fadeables: FadeableInfo[];
   /** Enfeites que dão uma reaçãozinha quando a criança encosta (não são prêmio). */
   touchables: TouchableInfo[];
+  /** Etapa interna concluída ao chegar na chegada (seção 8 do V2). */
+  finishStage?: string;
 }
 
 export interface TouchableInfo {
@@ -592,7 +596,7 @@ export class LevelBuilder {
       case 'questGate': {
         this.gate(e.id, v(e.min), v(e.max), e.color ?? PALETTE.purple);
         const g = o.gates.get(e.id)!;
-        o.questGates.push({ id: e.id, flag: e.flag, open: g.open, get opened() { return g.opened; } } as QuestGateInfo);
+        o.questGates.push({ id: e.id, flag: e.flag, stage: e.stage, open: g.open, get opened() { return g.opened; } } as QuestGateInfo);
         break;
       }
       case 'tagFriend': {
@@ -676,7 +680,7 @@ export class LevelBuilder {
         o.secretIds.push(e.id);
         break;
       case 'finish':
-        this.finish(v(e.pos), e.yaw ?? 0);
+        this.finish(v(e.pos), e.yaw ?? 0, e.stage);
         break;
       case 'message':
         this.trigger('message', v(e.min), v(e.max), {
@@ -686,6 +690,7 @@ export class LevelBuilder {
           mission: e.mission,
           tutorial: e.tutorial,
           minHint: e.minHint ?? 0,
+          stage: e.stage,
         });
         break;
       case 'button':
@@ -1265,9 +1270,10 @@ export class LevelBuilder {
     });
   }
 
-  private finish(p: V3, yaw: number) {
+  private finish(p: V3, yaw: number, stage?: string) {
     const o = this.out;
     o.finishPos = p;
+    o.finishStage = stage;
     const g = new THREE.Group();
     g.position.set(p.x, p.y, p.z);
     g.rotation.y = yaw;

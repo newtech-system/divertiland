@@ -17,9 +17,14 @@ export interface QuestHooks {
   reward(divertis: number): void;
   finishLevel(): void;
   onTagged(n: number, total: number): void;
+  /** Avisa que uma etapa interna da aventura terminou (seção 8). */
+  stageDone(stageId: string): void;
 }
 
 type FriendState = 'new' | 'active' | 'ready' | 'done';
+
+/** Qual parte da missão do amigo está valendo (0 = primeira, 1 = segunda). */
+type FriendPhase = 0 | 1;
 
 interface TagRunner {
   info: BuiltLevel['tagFriends'][number];
@@ -38,6 +43,7 @@ interface TagRunner {
 export class QuestSystem {
   readonly flags = new Set<string>();
   private friendState = new Map<string, FriendState>();
+  private friendPhase = new Map<string, FriendPhase>();
   private memory = new Map<string, { seq: PadInfo[]; showing: boolean; showT: number; step: number; idx: number }>();
   private runners: TagRunner[] = [];
   private t = 0;
@@ -49,6 +55,7 @@ export class QuestSystem {
   ) {
     for (const f of lvl.friends) {
       this.friendState.set(f.def.id, 'new');
+      this.friendPhase.set(f.def.id, 0);
       f.interact.onInteract = () => this.talk(f);
     }
     for (const tf of lvl.tagFriends) {
@@ -62,6 +69,11 @@ export class QuestSystem {
 
   get questFriends() {
     return this.lvl.friends.filter((f) => f.def.quest);
+  }
+
+  /** Portões que dependem de flags já ligadas (chamado ao retomar uma partida salva). */
+  refreshGates(): void {
+    this.openGates();
   }
 
   /** Todos os amigos com missão foram ajudados? */
@@ -80,10 +92,21 @@ export class QuestSystem {
 
   // ------------------------------------------------------------------ conversa
 
+  /** Dados da missão da fase atual do amigo (primeira ou segunda parte). */
+  private phaseOf(f: FriendInfo) {
+    const d = f.def;
+    const phase = this.friendPhase.get(d.id) ?? 0;
+    if (phase === 1 && d.quest2) {
+      return { quest: d.quest2, intro: d.intro2 ?? d.intro, mission: d.mission2, thanks: d.thanks2 ?? d.thanks, hint: d.hint2, stage: d.stage2 };
+    }
+    return { quest: d.quest, intro: d.intro, mission: d.mission, thanks: d.thanks, hint: d.hint, stage: d.stage };
+  }
+
   private talk(f: FriendInfo) {
     const d = f.def;
     const st = this.friendState.get(d.id)!;
     const h = this.hooks;
+    const ph = this.phaseOf(f);
     if (d.finishesLevel) {
       if (d.needsFlag && !this.flags.has(d.needsFlag)) {
         h.say(d.name, d.icon, d.intro);
@@ -94,28 +117,32 @@ export class QuestSystem {
       h.finishLevel();
       return;
     }
-    if (!d.quest) {
-      h.say(d.name, d.icon, st === 'new' ? d.intro : d.hint ?? d.thanks);
-      if (st === 'new') this.friendState.set(d.id, 'done');
+    if (!ph.quest) {
+      h.say(d.name, d.icon, st === 'new' ? ph.intro : ph.hint ?? ph.thanks);
+      if (st === 'new') {
+        this.friendState.set(d.id, 'done');
+        if (ph.stage) h.stageDone(ph.stage);
+      }
       return;
     }
     if (st === 'new') {
-      h.say(d.name, d.icon, d.intro);
+      h.say(d.name, d.icon, ph.intro);
       this.friendState.set(d.id, 'active');
-      if (d.mission) h.mission(d.mission);
-      if (d.quest.type === 'pads' && d.quest.memory) this.startMemory(d.quest.group);
+      if (ph.mission) h.mission(ph.mission);
+      if (ph.quest.type === 'pads' && ph.quest.memory) this.startMemory(ph.quest.group);
       h.audio.play('pop');
       return;
     }
     if (st === 'active') {
-      if (d.quest.type === 'pads' && d.quest.memory) this.replayMemory(d.quest.group);
-      h.say(d.name, d.icon, d.mission ? `${d.mission}!` : 'Você consegue!');
+      if (ph.quest.type === 'pads' && ph.quest.memory) this.replayMemory(ph.quest.group);
+      h.say(d.name, d.icon, ph.mission ? `${ph.mission}!` : 'Você consegue!');
       return;
     }
     if (st === 'ready') {
       this.friendDone(f);
-      this.flags.add(d.quest.flag);
-      h.say(d.name, d.icon, `${d.thanks}${d.hint ? ' ' + d.hint : ''}`);
+      this.flags.add(ph.quest.flag);
+      if (ph.stage) h.stageDone(ph.stage);
+      h.say(d.name, d.icon, `${ph.thanks}${ph.hint ? ' ' + ph.hint : ''}`);
       h.audio.play('star');
       h.reward(10);
       h.toast('💛', `Você ajudou ${d.name}!`);
@@ -123,21 +150,31 @@ export class QuestSystem {
       h.particles.emit({ x: p.x, y: p.y + 2, z: p.z }, 40, { colors: [...FX_COLORS.confetti], speed: 5, life: 1.2, size: 0.3 });
       this.openGates();
       if (this.helpedEveryone) this.flags.add('helpedEveryone');
+      // A história continua: o mesmo amigo pode pedir a segunda coisa.
+      if ((this.friendPhase.get(d.id) ?? 0) === 0 && d.quest2) {
+        this.friendPhase.set(d.id, 1);
+        this.friendState.set(d.id, 'new');
+        this.friendBubble(f, '❗');
+      }
       return;
     }
-    h.say(d.name, d.icon, d.hint ?? d.thanks);
+    h.say(d.name, d.icon, ph.hint ?? ph.thanks);
+  }
+
+  private friendBubble(f: FriendInfo, icon: string) {
+    (f.bubble.material as THREE.SpriteMaterial).map = textTexture(icon, { font: 180, width: 256, height: 256 });
+    (f.bubble.material as THREE.SpriteMaterial).needsUpdate = true;
   }
 
   private friendDone(f: FriendInfo) {
     this.friendState.set(f.def.id, 'done');
-    (f.bubble.material as THREE.SpriteMaterial).map = textTexture('💛', { font: 180, width: 256, height: 256 });
-    (f.bubble.material as THREE.SpriteMaterial).needsUpdate = true;
+    this.friendBubble(f, '💛');
   }
 
   /** Missão cumprida → o amigo fica esperando para agradecer. */
   private questReady(group: string) {
     for (const f of this.lvl.friends) {
-      const q = f.def.quest;
+      const q = this.phaseOf(f).quest;
       if (!q || q.group !== group || this.friendState.get(f.def.id) !== 'active') continue;
       this.friendState.set(f.def.id, 'ready');
       this.hooks.audio.play('unlock');
@@ -161,7 +198,7 @@ export class QuestSystem {
   // ------------------------------------------------------------------ botões e memória
 
   private activeGroup(group: string): boolean {
-    return this.lvl.friends.some((f) => f.def.quest?.group === group && this.friendState.get(f.def.id) === 'active');
+    return this.lvl.friends.some((f) => this.phaseOf(f).quest?.group === group && this.friendState.get(f.def.id) === 'active');
   }
 
   private startMemory(group: string) {
@@ -187,7 +224,7 @@ export class QuestSystem {
 
   private onPad(pad: PadInfo) {
     const g = pad.def.group;
-    const quest = this.lvl.friends.find((f) => f.def.quest?.group === g)?.def.quest;
+    const quest = this.lvl.friends.map((f) => this.phaseOf(f).quest).find((q) => q?.group === g);
     if (!quest || quest.type !== 'pads' || !this.activeGroup(g)) {
       pad.glow = 1;
       this.hooks.audio.play('note', { pitch: 0.9 + (pad.def.order ?? 0) * 0.15 });
@@ -236,7 +273,7 @@ export class QuestSystem {
       this.hooks.audio.play('collectible');
       const group = it.def.group;
       const got = this.lvl.questItems.filter((q) => q.def.group === group && q.taken).length;
-      const quest = this.lvl.friends.find((f) => f.def.quest?.group === group)?.def.quest;
+      const quest = this.lvl.friends.map((f) => this.phaseOf(f).quest).find((q) => q?.group === group);
       const need = quest?.type === 'collect' ? quest.count : this.lvl.questItems.filter((q) => q.def.group === group).length;
       this.hooks.toast(it.def.icon, `Achou! ${got}/${need}`);
       this.hooks.particles.emit(it.obj.position, 20, { colors: [...FX_COLORS.magic], speed: 3, life: 0.8 });

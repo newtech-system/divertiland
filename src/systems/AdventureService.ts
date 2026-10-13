@@ -208,8 +208,10 @@ export class AdventureService {
       return { kind: 'incomplete', stages: this.stageSummaries(adv, ap.stagesDone) };
     }
 
-    // --- Etapas desta jogada concluídas
-    for (const sid of run.stages) if (!ap.stagesDone.includes(sid)) ap.stagesDone.push(sid);
+    // --- Etapas concluídas: o que a fase relatou (quando ela sabe) ou as etapas
+    // declaradas pela jogada em data/adventures.ts.
+    const reported = (r.stagesDone ?? []).filter((s) => run.stages.includes(s));
+    for (const sid of reported.length ? reported : run.stages) if (!ap.stagesDone.includes(sid)) ap.stagesDone.push(sid);
     ap.runIndex = Math.min(runIndex + 1, adv.runs.length - 1);
 
     const isLastRun = runIndex >= adv.runs.length - 1;

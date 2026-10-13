@@ -73,6 +73,19 @@ export type LayoutEntity = Base &
         mission?: string;
         thanks: string;
         hint?: string;
+        /**
+         * SEGUNDA parte da missão do mesmo amigo: a história continua depois do primeiro
+         * obrigado (ex.: a criança primeiro pede as pistas, depois pede o ursinho).
+         */
+        quest2?: QuestDef;
+        intro2?: string;
+        mission2?: string;
+        thanks2?: string;
+        hint2?: string;
+        /** Etapa concluída quando a primeira missão deste amigo termina. */
+        stage?: string;
+        /** Etapa concluída quando a segunda missão termina. */
+        stage2?: string;
         /** Conversar com este amigo (depois da flag `needsFlag`) conclui a fase. */
         finishesLevel?: boolean;
         needsFlag?: string;
@@ -82,7 +95,7 @@ export type LayoutEntity = Base &
     /** Botão de chão (pisar). Usado em missões de "apertar todos" ou sequência de memória. */
     | { t: 'pad'; id: string; group: string; pos: Vec3; color: string; order?: number }
     /** Portão que abre quando uma flag de missão é ligada. */
-    | { t: 'questGate'; id: string; min: Vec3; max: Vec3; flag: string; color?: string }
+    | { t: 'questGate'; id: string; min: Vec3; max: Vec3; flag: string; color?: string; stage?: string }
     /** Amigo do pega-pega: foge quando você chega perto; encoste para pegar! */
     | { t: 'tagFriend'; id: string; kind: PropKind; color: string; accent?: string; pos: Vec3; area: [Vec3, Vec3]; speed?: number }
     /** Bloco surpresa: bater nele de baixo solta uma gema. */
@@ -107,7 +120,7 @@ export type LayoutEntity = Base &
     | { t: 'spinner'; pos: Vec3; length: number; speed: number; height?: number; color?: string }
     | { t: 'curtain'; min: Vec3; max: Vec3; colors?: string[] }
     | { t: 'secretZone'; id: string; min: Vec3; max: Vec3 }
-    | { t: 'finish'; pos: Vec3; yaw?: number }
+    | { t: 'finish'; pos: Vec3; yaw?: number; stage?: string }
     | {
         t: 'message';
         id: string;
@@ -122,6 +135,8 @@ export type LayoutEntity = Base &
         tutorial?: boolean;
         /** Mostra só se a ajuda do estilo for >= este valor. */
         minHint?: number;
+        /** Etapa concluída ao entrar nesta zona (ex.: "chegar e aprender"). */
+        stage?: string;
       }
     | { t: 'button'; id: string; pos: Vec3; target: string; yaw?: number }
     | { t: 'gate'; id: string; min: Vec3; max: Vec3; color?: string }
@@ -140,6 +155,12 @@ export type LayoutEntity = Base &
         size?: number;
       }
   );
+
+/**
+ * Etapas internas da aventura (seção 8 do V2). Entidades com `stage` avisam o jogo
+ * quando aquela etapa termina — é assim que a aventura salva "etapa por etapa" e o mapa
+ * mostra o próximo objetivo compreensível.
+ */
 
 /** Missões (seção 17): buscar objetos, pisar em botões ou repetir uma sequência. */
 export type QuestDef =

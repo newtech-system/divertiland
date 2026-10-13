@@ -17,6 +17,11 @@ export interface LevelRunResult {
   flags: string[];
   /** Estatísticas somadas ao perfil (ex.: trampolineBounces, falls). */
   stats: Record<string, number>;
+  /**
+   * Etapas internas da aventura concluídas nesta partida (seção 8 do V2).
+   * Quando ausente, valem as etapas declaradas pela jogada em data/adventures.ts.
+   */
+  stagesDone?: string[];
 }
 
 export interface RewardLine {
