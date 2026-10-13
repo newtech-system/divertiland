@@ -321,15 +321,23 @@ add(
   { t: 'killZone', min: [2.6, -1, 110], max: [9, 2.6, 134] },
   { t: 'platform', pos: [6, 4, 112.4], size: [2.4, 2.4], scales: true, color: PALETTE.orange },
   { t: 'platform', pos: [4.8, 4, 115.5], size: [2.2, 2.2], scales: true, color: PALETTE.cyan },
+  // PONTOS SEGUROS SÓ NO BICHO-PREGUIÇA: a ajuda "Vamos juntos?" leva a criança de um
+  // ponto seguro ao seguinte. Sem estes, depois de três quedas ela seria levada para
+  // DEPOIS do caminho das plataformas — pulando a pista 3 e a peça de apoio, que são
+  // obrigatórias. Com eles, cada parada fica ao lado do que ela precisa pegar.
+  { t: 'checkpoint', id: 'cp_plat1', pos: [4.8, 4, 115.5], onlyIn: ['sloth'] },
   { t: 'platform', pos: [5, 4, 119.5], size: [2.2, 2.2], scales: true, color: PALETTE.pink, move: { to: [7.6, 4, 119.5], period: 4 } },
   { t: 'platform', pos: [6, 4, 123], size: [3.2, 3.2], shape: 'disc', scales: true, color: PALETTE.yellow, spin: 0.8 },
+  { t: 'checkpoint', id: 'cp_plat2', pos: [6.8, 4, 123], onlyIn: ['sloth'] },
   // PISTA #3: na plataforma que gira — ela conta o detalhe que resolve a escolha final.
   { t: 'questItem', id: 'pista_3', group: 'pistas', kind: 'teddy', icon: '🧸', pos: [6, 4.8, 123], color: '#c98a52', scale: 1.1 },
   { t: 'platform', pos: [5, 4.6, 126.5], size: [2.2, 2.2], scales: true, color: PALETTE.green },
+  { t: 'checkpoint', id: 'cp_plat3', pos: [5.7, 4.6, 126.5], onlyIn: ['sloth'] },
   // PEÇA DE APOIO #2
   { t: 'questItem', id: 'apoio_2', group: 'apoio', kind: 'stack', icon: '🧩', pos: [5, 5.4, 126.5], color: PALETTE.orange, scale: 1.1 },
   { t: 'platform', pos: [7, 4, 129.5], size: [2.4, 2.4], scales: true, color: PALETTE.purple },
   { t: 'platform', pos: [5.4, 4, 132.4], size: [2.4, 2.4], scales: true, color: PALETTE.pink },
+  { t: 'checkpoint', id: 'cp_plat4', pos: [5.4, 4, 132.4], onlyIn: ['sloth'] },
   { t: 'coinLine', from: [6, 4.9, 111.8], to: [6, 4.9, 113], count: 2 },
   { t: 'coinLine', from: [4.8, 4.9, 114.9], to: [4.8, 4.9, 116.1], count: 2 },
   { t: 'coinLine', from: [5, 5.4, 119.5], to: [7.6, 5.4, 119.5], count: 3 },

@@ -48,6 +48,12 @@ export interface GoldenTeddy {
   hint: string;
   /** Id do colecionável no conteúdo atual. Sem isso, ainda não foi colocado no jogo. */
   from?: string;
+  /**
+   * Ids que ESTE MESMO ursinho tinha no conteúdo antigo. É o que faz a migração entender
+   * que quem já achou o ursinho continua com ele depois de a fase ser reconstruída
+   * (seção 17.1: a identidade do ursinho é permanente, a posição não).
+   */
+  legacyFrom?: string[];
 }
 
 /** O que a aventura ensina, de forma verificável (seção 15). */
@@ -119,9 +125,14 @@ export const ADVENTURES: AdventureDef[] = [
       { id: 'a01_segredo', type: 'secret', secretId: 'a01_sala_secreta', icon: '🔍', label: 'Descubra a sala secreta' },
     ],
     goldens: [
-      { id: 'a01_urso_1', hint: 'Atrás do pilar da entrada, para quem olha em volta.', from: 'a01_urso_1' },
-      { id: 'a01_urso_2', hint: 'No alto da pilha de almofadas dos blocos malucos.', from: 'a01_urso_2' },
-      { id: 'a01_urso_3', hint: 'No recanto tranquilo: só chega quem segue as pistas e abre a passagem.', from: 'a01_urso_3' },
+      { id: 'a01_urso_1', hint: 'Atrás do pilar da entrada, para quem olha em volta.', from: 'a01_urso_1', legacyFrom: ['teddy_1'] },
+      { id: 'a01_urso_2', hint: 'No alto da pilha de almofadas dos blocos malucos.', from: 'a01_urso_2', legacyFrom: ['teddy_2'] },
+      {
+        id: 'a01_urso_3',
+        hint: 'No recanto tranquilo: só chega quem segue as pistas e abre a passagem.',
+        from: 'a01_urso_3',
+        legacyFrom: ['teddy_3'],
+      },
     ],
     learning: {
       skill: ['observation', 'empathy', 'spatial_awareness'],

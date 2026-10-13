@@ -8,7 +8,7 @@ import type { CheckpointInfo } from '../src/levels/exploration/LevelBuilder';
 import { GameServices } from '../src/systems/GameServices';
 import type { LevelRunResult } from '../src/systems/LevelResult';
 import { MemoryStorageAdapter } from '../src/systems/save/StorageAdapter';
-import { sanitizeSave } from '../src/systems/save/SaveSchema';
+import { migrate, sanitizeSave } from '../src/systems/save/SaveSchema';
 import type { InProgressRun } from '../src/systems/save/SaveTypes';
 
 /**
@@ -304,5 +304,86 @@ describe('Meu Mundo: espaço livre honesto', () => {
   it('tem um terreno reservado e identificado para a peça de cada aventura', () => {
     const texts = LEVEL_MEU_MUNDO.entities.filter((x) => x.t === 'sign').map((x) => (x.t === 'sign' ? x.text : ''));
     for (const a of ADVENTURES) expect(texts.some((t) => t.includes(a.worldPiece.name))).toBe(true);
+  });
+});
+
+describe('Quem já jogava não ganha nem perde nada duas vezes (migração)', () => {
+  /** Save antigo: Fase 1 inteira com os 3 ursinhos, A04 pela metade, segredo da Fase 9. */
+  const v1 = () => ({
+    version: 1,
+    createdAt: 1,
+    updatedAt: 2,
+    activeProfileId: 'p1',
+    emptiedOnPurpose: false,
+    settings: {},
+    profiles: [
+      {
+        id: 'p1',
+        name: 'Theo',
+        character: 'jhow',
+        preferredDifficulty: 'monkey',
+        divertis: 500,
+        levels: {
+          w1_l01: { completed: true, bestStars: 3, collectiblesFound: ['teddy_1', 'teddy_2', 'teddy_3'], secretsFound: ['w1_l01_secret_room'], completedDifficulties: ['monkey'] },
+          w1_l05: { completed: true, bestStars: 2, collectiblesFound: ['p_teddy1'], secretsFound: [], completedDifficulties: ['monkey'] },
+          w1_l09: { completed: true, bestStars: 2, collectiblesFound: ['u_paw1'], secretsFound: ['w1_l09_secret'], completedDifficulties: ['monkey'] },
+        },
+      },
+    ],
+  });
+
+  /** Abre o jogo novo com um save antigo já migrado (o mesmo caminho do jogo real). */
+  async function carregar(save: Record<string, unknown>) {
+    const migrado = migrate(save);
+    const s = new GameServices(new MemoryStorageAdapter(), 0);
+    await s.init();
+    s.save.data.profiles = migrado.profiles;
+    s.save.data.activeProfileId = 'p1';
+    s.profiles.select('p1');
+    return s;
+  }
+
+  it('os três ursinhos da Fase 1 continuam na coleção depois de ela virar a Aventura 1', async () => {
+    const s = await carregar(v1());
+    expect(s.adventures.progress('a01').goldens.sort()).toEqual(['a01_urso_1', 'a01_urso_2', 'a01_urso_3']);
+    // mas a HISTÓRIA nova não vem de graça: a A01 ainda não está concluída
+    expect(s.adventures.progress('a01').completed).toBe(false);
+    expect(s.adventures.progress('a04').goldens).toEqual(['a04_urso_1']);
+  });
+
+  it('concluir uma aventura migrada NÃO paga de novo os ursinhos e segredos antigos', async () => {
+    const s = await carregar(v1());
+    const saldo0 = s.currency.balance;
+    // Joga a A01 inteira sem achar nada novo: os três ursinhos já eram dela.
+    const out = s.adventures.applyRun('a01', 0, run('a01', { stagesDone: ['a01_e1', 'a01_e2', 'a01_e3', 'a01_e4', 'a01_e5', 'a01_e6'] }));
+    expect(out.kind).toBe('done');
+    if (out.kind !== 'done') return;
+    expect(out.outcome.newGoldens).toEqual([]);
+    expect(out.outcome.rewardLines.some((l) => l.icon === '🧸')).toBe(false);
+    expect(s.adventures.progress('a01').goldens).toHaveLength(3);
+    expect(out.outcome.goldensTotal.found).toBe(5); // 3 da A01 + p_teddy1 + u_paw1
+    // A05 (w1_l09 + w1_s01): o segredo antigo não pode virar bônus de novo.
+    const adv05 = getAdventure('a05')!;
+    s.adventures.applyRun('a05', 0, run(adv05.runs[0].levelId));
+    const fim = s.adventures.applyRun('a05', 1, run(adv05.runs[1].levelId));
+    expect(fim.kind).toBe('done');
+    if (fim.kind !== 'done') return;
+    expect(fim.outcome.rewardLines.some((l) => l.label.includes('Segredo'))).toBe(false);
+    expect(fim.outcome.newGoldens).toEqual([]); // u_paw1 já era dela
+    // E o saldo só cresceu pelo que é de verdade novo (conclusão + estrelas), nunca
+    // repetindo colecionável ou segredo antigo.
+    expect(s.currency.balance).toBeGreaterThan(saldo0);
+    const dourados = s.profiles.active!.ledger.filter((e) => e.kind === 'golden');
+    expect(dourados).toEqual([]);
+  });
+
+  it('a A04 pela metade também entra sem pagar o ursinho que já era dela', async () => {
+    const s = await carregar(v1());
+    const adv = getAdventure('a04')!;
+    expect(s.adventures.progress('a04').completed).toBe(false);
+    adv.runs.forEach((r, i) => s.adventures.applyRun('a04', i, run(r.levelId)));
+    const pagos = s.profiles.active!.ledger.filter((e) => e.kind === 'golden').map((e) => e.key);
+    expect(pagos).toEqual([]);
+    expect(s.adventures.progress('a04').completed).toBe(true);
   });
 });

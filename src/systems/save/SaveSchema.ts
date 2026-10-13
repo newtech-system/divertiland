@@ -359,12 +359,18 @@ const MIGRATIONS: Record<number, Migration> = {
           if (done) for (const sid of run.stages) stagesDone.add(sid);
           else allDone = false;
           if (isObj(lp)) {
-            for (const c of Array.isArray(lp.collectiblesFound) ? lp.collectiblesFound : []) {
-              const gid = adv.goldens.find((g) => g.from === c)?.id;
-              if (gid) goldens.add(gid);
-            }
             for (const sec of Array.isArray(lp.secretsFound) ? lp.secretsFound : []) secrets.add(String(sec));
             for (const d of Array.isArray(lp.completedDifficulties) ? lp.completedDifficulties : []) diffs.add(String(d));
+          }
+        }
+        // Ursinhos dourados: procura em TODAS as fases antigas, inclusive nas que foram
+        // reconstruídas com outro id (a Fase 1 virou a Aventura 1). Quem já achou continua
+        // com ele — e a chave do livro-caixa abaixo garante que não será pago de novo.
+        for (const lp of Object.values(levels)) {
+          if (!isObj(lp)) continue;
+          for (const c of Array.isArray(lp.collectiblesFound) ? lp.collectiblesFound : []) {
+            const g = adv.goldens.find((x) => x.from === c || x.legacyFrom?.includes(String(c)));
+            if (g) goldens.add(g.id);
           }
         }
         ap.stagesDone = [...stagesDone];
@@ -387,10 +393,14 @@ const MIGRATIONS: Record<number, Migration> = {
       // paga, para a migração nunca pagar de novo (nem se rodar duas vezes).
       const keys = new Set<string>(Array.isArray(p.grantedKeys) ? p.grantedKeys.filter((k: unknown) => typeof k === 'string') : []);
       for (const adv of ADVENTURES) {
-        if (advs[adv.id]?.completed) {
-          keys.add(`${p.id}:${adv.id}:primeira`);
-          for (const g of advs[adv.id].goldens ?? []) keys.add(`${p.id}:${adv.id}:dourado:${g}`);
-        }
+        const ap = advs[adv.id];
+        if (!ap) continue;
+        // Tudo que a criança JÁ tinha entra como "já pago": o jogo antigo já deu os
+        // Divertis desses ursinhos e segredos. Vale mesmo que a aventura não esteja
+        // concluída — senão a primeira conclusão pagaria tudo de novo.
+        for (const g of ap.goldens ?? []) keys.add(`${p.id}:${adv.id}:dourado:${g}`);
+        for (const s of ap.secretsFound ?? []) keys.add(`${p.id}:${adv.id}:segredo:${s}`);
+        if (ap.completed) keys.add(`${p.id}:${adv.id}:primeira`);
       }
       p.grantedKeys = [...keys];
       if (!Array.isArray(p.ledger)) p.ledger = [];

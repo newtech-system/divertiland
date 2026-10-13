@@ -195,10 +195,18 @@ que o prova. Nada foi marcado como pronto por causa do relato.
 | Migração de saves antigos sem perder progresso | Sim — `MIGRATIONS[1]` | `tests/aventuras.test.ts` (save v1 → cinco aventuras, sem pagar de novo) |
 | Faixas de brinde sem pontos definidos | Sim — `PRIZE_TIERS` com `points: null` | `tests/aventuras.test.ts` (todas as faixas com `points === null`) |
 
-**Defeito encontrado nessa auditoria** (não estava no relato): numa aventura de **duas
-jogadas**, os Divertis da primeira etapa nunca eram creditados — `applyRun` só creditava no
-fim. Corrigido em `AdventureService.applyRun`; teste novo em `tests/marco2.test.ts`
-("numa aventura de duas jogadas, os Divertis da primeira etapa são creditados").
+**Dois defeitos encontrados nessa auditoria** (nenhum estava no relato):
+
+1. Numa aventura de **duas jogadas**, os Divertis da primeira etapa nunca eram creditados —
+   `applyRun` só creditava no fim. Corrigido em `AdventureService.applyRun`.
+2. **A migração pagava de novo.** As chaves do livro-caixa só eram criadas para aventuras
+   já concluídas. Quem tinha a A04 pela metade (um ursinho achado) ou um segredo antigo
+   recebia o bônus **outra vez** na primeira conclusão. Pior: os três ursinhos da Fase 1
+   não eram traduzidos para a Aventura 1 e **sumiam da coleção**, contrariando a regra de
+   identidade permanente. Agora todo ursinho e todo segredo que a criança já tinha entra
+   como "já pago", a Fase 1 tem a tradução antiga declarada nos dados (`legacyFrom`), e
+   três testes novos provam isso jogando a aventura migrada até o fim e conferindo que o
+   livro-caixa não tem nenhuma linha de ursinho ou segredo.
 
 ## 2. Entrega A — Aventura 1 jogável de ponta a ponta
 
@@ -248,6 +256,14 @@ que exige estar perto de verdade):**
   trampolim foi aproximado (vão de 0,5 m).
 - **Ursinho da Bia fora do alcance confortável**: ficava no meio do banquinho; passou para a
   borda da frente (o raio de coleta é 1,1 m).
+- **A ajuda do Bicho-Preguiça pulava itens obrigatórios.** Depois de três quedas no fosso, o
+  próximo ponto seguro era o do outro lado do caminho das plataformas — a criança seria
+  levada para depois da pista 3 e da peça de apoio, que são obrigatórias. Agora o caminho
+  das plataformas tem **quatro pontos seguros só no Bicho-Preguiça**, cada um ao lado do que
+  ela precisa pegar. Verificado acionando a ajuda de verdade (ver teste 3).
+- **Sair no meio apagava o ursinho dourado.** "Recomeçar etapa" limpava a partida salva e a
+  coleção ia junto. Agora sair guarda o que é permanente. Medido: pegar o ursinho da
+  entrada → sair → recomeçar a etapa → o mapa continua mostrando **🧸 1/3**.
 
 ## 3. Entrega B — mapa das cinco aventuras
 
@@ -279,11 +295,12 @@ do terreno, que construir, decorar e visitar amigos chegam nas próximas atualiz
 |---|---|---|
 | 1 | Criança entende a missão, acha as 3 pistas, devolve o ursinho, acha a sala secreta e chega ao fim | ✅ nos três estilos (tabela acima) — **falta o teste com criança de verdade** |
 | 2 | Voltar ao mapa, ver o estado atualizado e entrar/sair do Meu Mundo | ✅ medido: entrar no Meu Mundo, encostar no ponto seguro de lá e sair pelo portal **não mexeu** na partida salva da A01 (continuou `a01`, 8 s, checkpoint `cp3`) |
-| 3 | Bicho-Preguiça completa com ajuda; Macaco e Jaguar sem caminho impossível | ✅ os três terminam com **0 quedas** |
+| 3 | Bicho-Preguiça completa com ajuda; Macaco e Jaguar sem caminho impossível | ✅ os três terminam com **0 quedas**; e a ajuda foi **acionada de verdade**: 3 quedas no fosso → o Jhow ofereceu "Vamos juntos?" → aceitando, a criança foi parar na **2ª plataforma do caminho** (4,8 / 4 / 116,3), ainda **antes** da pista 3 e da peça de apoio — a ajuda não pula item obrigatório |
 | 4 | Nenhuma pista/colecionável obrigatório inalcançável; nenhuma armadilha | ✅ validador de percurso nos 3 estilos (`tests/percurso.test.ts`, agora cobrindo também **amigos, botões e a chegada**) + as 3 partidas completas |
 | 5 | Save antigo migra; repetir não duplica recompensa | ✅ `tests/aventuras.test.ts` e `tests/marco2.test.ts` (88 testes no total) |
 | 6 | Pontos de Troca em simulação, nenhum resgate real | ✅ teste automático + a tela de resultado mostra o selo **SIMULAÇÃO** |
-| 7 | Telas não cortam texto e dá para interagir no celular | ✅ `__fitAll()` e `__fitGame()` em **375×812**: nenhum problema (inclui mapa, cartão da aventura, cartão do Meu Mundo, HUD da A01, HUD do Meu Mundo, pausa e a tela de resultado da aventura) |
+| 7 | Telas não cortam texto e dá para interagir no celular | ✅ `__fitAll()` e `__fitGame()` em **375×812**: nenhum problema (inclui mapa, cartão da aventura, cartão do Meu Mundo, HUD da A01, HUD do Meu Mundo, pausa, **tela de etapa concluída** e tela de resultado da aventura) |
+| 9 | Aventura de duas jogadas: "etapa concluída → próxima etapa" | ✅ medido na A02: concluir a 1ª parte mostrou as três etapas com o que mudou no mundo, os Divertis da etapa e "➡️ Próxima etapa: abra os três cadeados"; o botão **Continuar a aventura** carregou a 2ª parte e guardou as etapas 1 a 3 |
 | 8 | Testes do Marco 1 continuam passando | ✅ `npx vitest run` → **88 testes, 6 arquivos, todos passando**; `npx tsc --noEmit` limpo; `npm run build` ok |
 
 **Teste humano (perfis Sara, 4 anos, e Théo, 10 anos): ainda NÃO foi feito.** Nada aqui

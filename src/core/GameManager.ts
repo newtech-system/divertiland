@@ -408,6 +408,16 @@ export class GameManager {
   quitLevel(): void {
     const level = this.levelId ? getLevel(this.levelId) : null;
     const snap = level?.sandbox ? null : this.level?.snapshot();
+    // Sair no meio da aventura guarda o que é PERMANENTE (ursinhos dourados e segredos):
+    // se a criança achar um ursinho e sair, ele continua na coleção dela mesmo que ela
+    // recomece a etapa do zero depois.
+    if (this.adventureRun && this.level) {
+      try {
+        this.services.adventures.applyRun(this.adventureRun.id, this.adventureRun.runIndex, this.level.partialResult());
+      } catch (e) {
+        log.warn('Não consegui guardar as descobertas da aventura', e);
+      }
+    }
     if (snap) this.services.progression.saveInProgress(snap);
     void this.services.save.flush();
     this.paused = false;

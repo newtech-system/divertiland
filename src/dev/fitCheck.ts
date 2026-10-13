@@ -200,6 +200,15 @@ export async function fitGame(game: GameManager) {
       game.closePause();
     }
   }
+  // Tela de "etapa concluída" (aventura com mais de uma jogada).
+  game.startAdventure('a02', 'monkey', false);
+  await wait(1900);
+  game.closePause();
+  (game.level as any)?.dev?.complete?.(3);
+  await wait(3200);
+  const etapa = fitCheck();
+  if (etapa.problems.length) report['etapa concluída'] = etapa.problems;
+
   // Tela de resultado da AVENTURA (com a aventura concluída de mentirinha).
   game.startAdventure('a01', 'monkey', false);
   await wait(1800);
