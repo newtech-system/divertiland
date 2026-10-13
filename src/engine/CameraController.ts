@@ -51,7 +51,10 @@ export class CameraController {
       // Só gira se o personagem não estiver vindo na direção da câmera (evita giros bruscos).
       const camForward = this.yaw + Math.PI;
       const diff = Math.abs(((heading - camForward + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-      if (diff < 2.2) this.yaw = dampAngle(this.yaw, behind, 1.2, dt);
+      // B06: só acompanha quando a criança já está indo mais ou menos para onde a câmera
+      // olha. Andando de lado ou de costas a câmera FICA PARADA — girar ali era o que
+      // trocava "frente" por "trás" no meio da corrida.
+      if (diff < 1.3) this.yaw = dampAngle(this.yaw, behind, 1.2, dt);
     }
     if (this.zonePitch !== null && this.time - this.lastManual > 1.4) this.pitch = damp(this.pitch, this.zonePitch, 2, dt);
 

@@ -28,6 +28,11 @@ export interface HudApi {
   mountPanel(el: HTMLElement | null): void;
   /** Esconde o contador de Divertis quando a fase não tem moedas. */
   showCoins(on: boolean): void;
+  /**
+   * Pergunta de uma frase só, com dois botões grandes (seção 6: "Vamos juntos?").
+   * Enquanto está aberta o desafio fica parado. Devolve true se a criança aceitou.
+   */
+  offer(speaker: CharacterId, text: string, yes: { icon: string; label: string }, no: { icon: string; label: string }): Promise<boolean>;
 }
 
 export interface LevelHost {

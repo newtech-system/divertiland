@@ -303,8 +303,10 @@ add(
   { t: 'coinLine', from: [0, 3.5, 172.4], to: [0, 9.5, 172.4], count: 4 },
   { t: 'gem', pos: [5, 8, 164] },
   { t: 'gem', pos: [5, 10, 164] },
-  // Plataforma da chegada
-  { t: 'box', min: [-6, 0, 175], max: [6, 7, 190], color: PALETTE.purple },
+  // Plataforma da chegada: ocupa a sala INTEIRA de parede a parede.
+  // B05: antes ela tinha 12 m de largura numa sala de 24 m, deixando duas valas de 7 m
+  // de profundidade ao lado do totem de chegada — quem caía ali ficava preso.
+  { t: 'box', min: [-12, 0, 175], max: [12, 7, 190], color: PALETTE.purple },
   { t: 'finish', pos: [0, 7, 182] },
   { t: 'npc', character: 'guide', pos: [3, 7, 183.5], yaw: Math.PI, anim: 'dance' },
   { t: 'decor', kind: 'neonSign', pos: [0, 11.5, 189.7], yaw: Math.PI, text: 'VOCÊ CONSEGUIU!', color: PALETTE.yellow, size: 1 },

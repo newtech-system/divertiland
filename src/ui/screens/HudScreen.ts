@@ -206,6 +206,40 @@ export class HudScreen extends Screen implements HudApi {
     this.speechTimer = setTimeout(() => sp.remove(), Math.max(4500, text.length * 85 + 2200));
   }
 
+  /**
+   * Pergunta com dois botões grandes. Usada pela ajuda do Bicho-Preguiça e pelos
+   * convites da história ("Quer que eu mostre?"). O desafio fica pausado enquanto
+   * a criança decide — seção 7.3.
+   */
+  offer(speaker: CharacterId, text: string, yes: { icon: string; label: string }, no: { icon: string; label: string }): Promise<boolean> {
+    const g = this.game;
+    return new Promise<boolean>((resolve) => {
+      let done = false;
+      const answer = (v: boolean) => {
+        if (done) return;
+        done = true;
+        close();
+        g.level?.setPaused(false);
+        resolve(v);
+      };
+      const panel = h(
+        'div',
+        { class: 'panel', style: 'text-align:center' },
+        speech(g, speaker, text),
+        h(
+          'div',
+          { class: 'row center wrap' },
+          btn(g, yes.label, { icon: yes.icon, cls: 'big green', onClick: () => answer(true) }),
+          btn(g, no.label, { icon: no.icon, cls: 'white', onClick: () => answer(false) }),
+        ),
+      );
+      g.level?.setPaused(true);
+      this.touch?.reset();
+      const close = g.ui.modal(panel, { closable: false });
+      g.speak(text);
+    });
+  }
+
   private prompt: string | null = null;
   setPrompt(icon: string | null) {
     this.prompt = icon;
@@ -281,7 +315,7 @@ export class HudScreen extends Screen implements HudApi {
         h(
           'div',
           { class: 'row center wrap' },
-          btn(g, 'Voltar ao checkpoint', { icon: '🚩', cls: 'white', onClick: () => g.restartCheckpoint() }),
+          btn(g, 'Voltar ao ponto seguro', { icon: '🚩', cls: 'white', onClick: () => g.restartCheckpoint() }),
           btn(g, 'Ajustes', { icon: '⚙️', cls: 'white', onClick: () => g.openSettings() }),
         ),
         btn(g, 'Sair para o mapa', { icon: '🗺️', cls: 'orange', onClick: () => g.quitLevel() }),

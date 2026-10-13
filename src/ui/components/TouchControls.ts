@@ -119,6 +119,7 @@ export class SwipeControls {
   readonly el: HTMLElement;
   private start: { x: number; y: number; t: number; id: number } | null = null;
   private fired = false;
+  private holdingDown = false;
 
   constructor(private input: InputManager) {
     const zone = h('div', { class: 'touch-zone', style: 'left:0;right:0;width:100%' });
@@ -134,15 +135,29 @@ export class SwipeControls {
       if (Math.hypot(dx, dy) < 34) return;
       this.fired = true;
       if (Math.abs(dx) > Math.abs(dy)) this.input.press(dx > 0 ? 'right' : 'left');
-      else this.input.press(dy < 0 ? 'up' : 'down');
+      else {
+        this.input.press(dy < 0 ? 'up' : 'down');
+        // B22: deslizou para baixo e CONTINUOU com o dedo na tela = segue abaixado.
+        if (dy > 0) this.holdingDown = true;
+      }
     });
     const end = (e: PointerEvent) => {
       if (!this.start || e.pointerId !== this.start.id) return;
       if (!this.fired && performance.now() - this.start.t < 300) this.input.press('up');
       this.start = null;
+      if (this.holdingDown) {
+        this.holdingDown = false;
+        this.input.release('down');
+      }
     };
     zone.addEventListener('pointerup', end);
-    zone.addEventListener('pointercancel', () => (this.start = null));
+    zone.addEventListener('pointercancel', () => {
+      this.start = null;
+      if (this.holdingDown) {
+        this.holdingDown = false;
+        this.input.release('down');
+      }
+    });
     const hint = h('div', { class: 'swipe-hint' }, '👆 deslize para os lados • para cima pula • para baixo abaixa');
     setTimeout(() => hint.remove(), 6000);
     this.el = h('div', { class: 'touch-layer' }, zone, hint);
@@ -150,5 +165,7 @@ export class SwipeControls {
 
   reset() {
     this.start = null;
+    this.holdingDown = false;
+    this.input.release('down');
   }
 }

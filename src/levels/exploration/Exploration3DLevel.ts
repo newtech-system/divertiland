@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createLogger } from '../../core/Logger';
 import type { CharacterId } from '../../core/types';
 import { CHARACTERS } from '../../data/characters';
+import { REACH } from '../../data/reach';
 import { ProceduralAnimator } from '../../engine/character/AnimationController';
 import { CharacterController, type MoveIntent } from '../../engine/character/CharacterController';
 import { CharacterModel } from '../../engine/character/CharacterModel';
@@ -11,6 +12,7 @@ import { FX_COLORS, Particles } from '../../engine/fx/Particles';
 import type { LevelRunResult } from '../../systems/LevelResult';
 import type { InProgressRun } from '../../systems/save/SaveTypes';
 import type { LevelHost, LevelRuntime } from '../LevelRuntime';
+import type { Collider, V3 } from '../../engine/physics/PhysicsWorld';
 import { CheckpointManager } from './CheckpointManager';
 import { CollectibleSystem, type PickupEvent } from './CollectibleSystem';
 import type { LevelLayout } from './LayoutTypes';
@@ -181,9 +183,18 @@ export class Exploration3DLevel implements LevelRuntime {
 
     for (const u of lvl.updaters) u(this.t, dt);
 
-    // Entrada → intenção de movimento relativa à câmera
+    // Entrada → intenção de movimento relativa à câmera.
+    // B06: a câmera se vira sozinha para ficar atrás de quem anda. Se a direção do
+    // comando for recalculada a cada quadro, a referência muda DURANTE a corrida e
+    // "frente" vira "trás" no meio do caminho (foi o que confundiu no teste).
+    // Solução: congelar a referência enquanto o comando está pressionado e só
+    // recalcular quando a criança solta ou mexe na câmera de propósito.
     const inp = h.input.state;
-    const basis = this.cam.planarBasis();
+    const moveMag = Math.hypot(inp.moveX, inp.moveY);
+    const lookingAround = Math.abs(inp.lookX) + Math.abs(inp.lookY) > 0.01;
+    if (moveMag < 0.12 || lookingAround) this.heldBasis = null;
+    if (!this.heldBasis) this.heldBasis = this.cam.planarBasis();
+    const basis = this.heldBasis;
     const intent: MoveIntent = {
       x: this.side ? inp.moveX : basis.fx * inp.moveY + basis.rx * inp.moveX,
       z: this.side ? 0 : basis.fz * inp.moveY + basis.rz * inp.moveX,
@@ -194,6 +205,7 @@ export class Exploration3DLevel implements LevelRuntime {
     };
     if (this.autoRoute) this.autopilotIntent(intent);
     if (this.respawning) intent.x = intent.z = 0;
+    if (!this.autoRoute) this.assist(dt, intent);
 
     // Zonas: escalada, piscina de bolinhas, câmera
     const p = this.controller.position;
@@ -246,6 +258,9 @@ export class Exploration3DLevel implements LevelRuntime {
       if (inside && !tr.inside) this.onEnter(tr);
       tr.inside = inside;
     }
+    // B34: a lava é perigo por CONTATO, não por uma caixa fina na altura do peito.
+    // Antes dava para andar o percurso inteiro pisando na "lava" e chegar ao fim.
+    if (!this.finished && !this.respawning && this.touchingLava()) this.respawn();
     if (this.controller.position.y < (this.layoutKillY ?? -6)) this.respawn();
 
     // Moedas e colecionáveis
@@ -286,9 +301,76 @@ export class Exploration3DLevel implements LevelRuntime {
     const v = this.controller.body.vel;
     if (this.side) this.updateSideCamera(dt);
     else this.cam.update(dt, pos, { x: inp.lookX, y: inp.lookY, zoom: inp.zoom }, { x: v.x, z: v.z, speed: Math.hypot(v.x, v.z) });
+    this.updateFadeables(dt, pos);
+    this.updateTouchables(dt, pos);
     this.particles.update(dt);
   }
 
+  /**
+   * Seção 7.2 — NADA tapa a visão da criança. Placas, bandeiras de checkpoint e balões
+   * que entram entre a câmera e o personagem (ou logo à frente dele) ficam translúcidos
+   * e voltam ao normal depois. Perigos e plataformas continuam visíveis.
+   */
+  private updateFadeables(dt: number, pos: V3) {
+    const list = this.lvl.fadeables;
+    if (!list.length) return;
+    const cam = this.camera.position;
+    this.fadeA.set(pos.x, pos.y + 1.1, pos.z);
+    for (const f of list) {
+      f.object.getWorldPosition(this.fadeB);
+      // Distância do objeto ao segmento câmera → personagem.
+      this.fadeSeg.subVectors(this.fadeA, cam);
+      const len2 = this.fadeSeg.lengthSq() || 1;
+      const t = Math.max(0, Math.min(1, this.fadeB.clone().sub(cam).dot(this.fadeSeg) / len2));
+      const near = this.fadeC.copy(cam).addScaledVector(this.fadeSeg, t).distanceTo(this.fadeB);
+      const want = near < f.radius + 0.9 ? 1 : 0;
+      f.faded = f.faded + (want - f.faded) * Math.min(1, dt * 9);
+      const op = 1 - f.faded * 0.82;
+      for (let i = 0; i < f.materials.length; i++) f.materials[i].opacity = f.baseOpacity[i] * op;
+    }
+  }
+
+  /**
+   * Enfeites que parecem prêmio (presentes, bolo) dão um "boing" quando a criança
+   * encosta — fica claro que são enfeites, sem prometer recompensa (B33, seção 16).
+   */
+  private updateTouchables(dt: number, pos: V3) {
+    for (const t of this.lvl.touchables) {
+      if (t.wobble > 0) {
+        t.wobble = Math.max(0, t.wobble - dt * 2.2);
+        const k = t.wobble;
+        t.obj.position.y = t.baseY + Math.sin(k * 22) * 0.07 * k;
+        t.obj.rotation.z = Math.sin(k * 18) * 0.12 * k;
+        continue;
+      }
+      const d = Math.hypot(t.pos.x - pos.x, t.pos.z - pos.z);
+      if (d < t.radius + this.controller.body.radius && Math.abs(t.pos.y - pos.y) < 1.6) {
+        t.wobble = 1;
+        this.host.audio.play('pop', { volume: 0.35, pitch: 1.3 });
+      }
+    }
+  }
+
+  private fadeA = new THREE.Vector3();
+  private fadeB = new THREE.Vector3();
+  private fadeC = new THREE.Vector3();
+  private fadeSeg = new THREE.Vector3();
+
+  /** Encostou na lava (em cima, de lado ou dentro)? Vale para qualquer face. */
+  private touchingLava(): boolean {
+    const body = this.controller.body;
+    if (body.grounded && body.ground?.surface === 'lava') return true;
+    const r = body.radius;
+    const p = body.pos;
+    const min = { x: p.x - r, y: p.y, z: p.z - r };
+    const max = { x: p.x + r, y: p.y + body.height * 0.6, z: p.z + r };
+    for (const c of this.lvl.world.overlapping(min, max, this.lavaProbe)) if (c.surface === 'lava') return true;
+    return false;
+  }
+
+  /** Referência frente/direita congelada enquanto o comando de andar está pressionado. */
+  private heldBasis: { fx: number; fz: number; rx: number; rz: number } | null = null;
+  private lavaProbe: Collider[] = [];
   private layoutKillY = -6;
   private quests!: QuestSystem;
   private completeOn: 'finish' | 'allTagged' = 'finish';
@@ -296,6 +378,131 @@ export class Exploration3DLevel implements LevelRuntime {
   /** Fase de plataforma 2D (vista lateral). */
   private side = false;
   private sideCam = { x: 0, y: 0, look: 0 };
+
+  // ------------------------------------------------------------------ ajuda de controle (seção 6)
+
+  private assistFalls = 0;
+  private assistAskedAt = -99;
+  private assistLedTo: string | null = null;
+  private guiding = 0;
+  private guideTarget: V3 | null = null;
+  private stuckAt: V3 | null = null;
+  private stuckT = 0;
+  private autoJumpCooldown = 0;
+
+  /**
+   * ASSISTÊNCIA DE CONTROLE — separada da complexidade da missão (seção 6).
+   * No Bicho-Preguiça:
+   *  - pulo automático contextual: chegando na beirada com uma plataforma ao alcance,
+   *    o pulo sai sozinho (a criança não precisa acertar o tempo);
+   *  - depois de cair algumas vezes no mesmo trecho, o guia oferece "Vamos juntos?"
+   *    e conduz até o próximo ponto seguro.
+   * Em TODOS os estilos: ninguém fica preso (seção 7.4).
+   */
+  private assist(dt: number, intent: MoveIntent) {
+    const b = this.controller.body;
+    const sloth = this.host.params.hintLevel >= 2;
+    this.autoJumpCooldown = Math.max(0, this.autoJumpCooldown - dt);
+
+    // --- Conduzindo até o ponto seguro ("Vamos juntos?")
+    if (this.guiding > 0 && this.guideTarget) {
+      this.guiding -= dt;
+      const dx = this.guideTarget.x - b.pos.x;
+      const dz = this.guideTarget.z - b.pos.z;
+      const d = Math.hypot(dx, dz);
+      if (d < 1.2 || this.guiding <= 0) {
+        this.guiding = 0;
+        this.guideTarget = null;
+        this.controller.frozen = false;
+        this.host.hud.say(this.guide, 'Chegamos! Agora é com você. Eu fico aqui torcendo!', '🤝');
+      } else {
+        intent.x = dx / d;
+        intent.z = dz / d;
+        intent.sprint = false;
+        // Pula sozinho no caminho quando precisa.
+        if (b.grounded && (this.noGroundAhead(intent, 0.9) || b.hitWall)) intent.jumpPressed = true;
+        intent.jumpHeld = true;
+      }
+      return;
+    }
+
+    // --- Pulo automático contextual (só no estilo tranquilo)
+    if (sloth && b.grounded && !this.side && this.autoJumpCooldown === 0) {
+      const mag = Math.hypot(intent.x, intent.z);
+      if (mag > 0.5 && this.noGroundAhead(intent, 0.75) && this.landingAhead(intent)) {
+        intent.jumpPressed = true;
+        intent.jumpHeld = true;
+        this.autoJumpCooldown = 0.5;
+      }
+    }
+
+    // --- Nunca ficar preso: parado, empurrando e sem sair do lugar
+    const moving = Math.hypot(intent.x, intent.z) > 0.3;
+    if (moving && !this.finished && !this.respawning) {
+      if (!this.stuckAt || Math.hypot(b.pos.x - this.stuckAt.x, b.pos.z - this.stuckAt.z) > 0.6 || Math.abs(b.pos.y - this.stuckAt.y) > 0.6) {
+        this.stuckAt = { ...b.pos };
+        this.stuckT = 0;
+      } else {
+        this.stuckT += dt;
+        if (this.stuckT > 3.5) {
+          this.stuckT = 0;
+          this.stuckAt = null;
+          this.host.hud.say(this.guide, 'Acho que travamos aqui! Vou te levar de volta para o ponto seguro.', '🤝');
+          void this.respawn();
+        }
+      }
+    } else {
+      this.stuckT = 0;
+    }
+  }
+
+  /** Tem chão logo à frente na direção em que a criança anda? */
+  private noGroundAhead(intent: MoveIntent, dist: number): boolean {
+    const b = this.controller.body;
+    const mag = Math.hypot(intent.x, intent.z) || 1;
+    const x = b.pos.x + (intent.x / mag) * dist;
+    const z = b.pos.z + (intent.z / mag) * dist;
+    const hit = this.lvl.world.groundBelow(x, b.pos.y + 0.3, z, 1.2, b.radius * 0.6);
+    return !hit || hit.collider.surface === 'lava';
+  }
+
+  /** Existe lugar para pousar dentro do alcance do pulo, seguindo em frente? */
+  private landingAhead(intent: MoveIntent): boolean {
+    const b = this.controller.body;
+    const mag = Math.hypot(intent.x, intent.z) || 1;
+    for (let d = 1.4; d <= REACH.jumpDistanceWalk; d += 0.5) {
+      const x = b.pos.x + (intent.x / mag) * d;
+      const z = b.pos.z + (intent.z / mag) * d;
+      const hit = this.lvl.world.groundBelow(x, b.pos.y + REACH.jumpHeight, z, REACH.jumpHeight + 1.2, b.radius * 0.6);
+      if (hit && hit.collider.surface !== 'lava' && hit.y <= b.pos.y + REACH.stepUpHeight) return true;
+    }
+    return false;
+  }
+
+  /** Depois de cair várias vezes no mesmo trecho, oferece ajuda de verdade. */
+  private async maybeOfferHelp() {
+    if (this.autoRoute) return; // piloto automático de teste não responde perguntas
+    const sloth = this.host.params.hintLevel >= 2;
+    const limit = sloth ? 3 : 6;
+    const cpId = this.checkpoints.respawnId();
+    if (this.assistLedTo === cpId) return;
+    if (this.assistFalls < limit || this.t - this.assistAskedAt < 25) return;
+    this.assistAskedAt = this.t;
+    this.assistFalls = 0;
+    const next = this.checkpoints.nextSafePoint();
+    if (!next) return;
+    const yes = await this.host.hud.offer(
+      this.guide,
+      'Esse trecho é osso duro! Quer ir junto comigo até o próximo ponto seguro?',
+      { icon: '🤝', label: 'Vamos juntos!' },
+      { icon: '💪', label: 'Deixa que eu tento' },
+    );
+    if (!yes) return;
+    this.assistLedTo = cpId;
+    this.guideTarget = next;
+    this.guiding = 14;
+    this.host.hud.say(this.guide, 'Segura na minha mão! A gente vai devagar.', '🤝');
+  }
 
   // ------------------------------------------------------------------ piloto automático (testes de QA)
 
@@ -532,6 +739,7 @@ export class Exploration3DLevel implements LevelRuntime {
     if (this.respawning || this.finished) return;
     this.respawning = true;
     this.falls++;
+    this.assistFalls++;
     const h = this.host;
     h.audio.play('whoosh');
     if (this.t - this.lastAlmost > 12) {
@@ -562,6 +770,8 @@ export class Exploration3DLevel implements LevelRuntime {
     h.audio.play('pop');
     await h.hud.fade(false);
     this.respawning = false;
+    // Só oferece ajuda depois de reaparecer de verdade (nunca por cima do fade).
+    await this.maybeOfferHelp();
   }
 
   private complete() {

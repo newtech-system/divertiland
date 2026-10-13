@@ -83,6 +83,45 @@ function visibleBox(el: HTMLElement) {
   return { box, r, scrollableX, scrollableY };
 }
 
+const TEXT_SELECTOR = [
+  '#ui h1',
+  '#ui h2',
+  '#ui h3',
+  '#ui h4',
+  '#ui .title-l',
+  '#ui .objective',
+  '#ui .hud-mission',
+  '#ui .bubble',
+  '#ui .item-name',
+  '#ui .btn',
+  '#ui button',
+  '#ui .pill',
+  '#ui .result-line',
+].join(',');
+
+/**
+ * TEXTO CORTADO (B37: "Você conquistou" aparecia cortado).
+ * Procura qualquer texto que não cabe na sua caixa e está com `overflow` escondido —
+ * é o defeito que o verificador de botões não pega, porque o botão está lá, só ilegível.
+ * `fontScale` repete a checagem com texto ampliado (seção 26.1 pede isso).
+ */
+export function textCheck(): FitProblem[] {
+  const problems: FitProblem[] = [];
+  document.querySelectorAll<HTMLElement>(TEXT_SELECTOR).forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return;
+    const st = getComputedStyle(el);
+    if (st.visibility === 'hidden' || st.display === 'none' || Number(st.opacity) < 0.05) return;
+    const hiddenX = st.overflowX === 'hidden' || st.overflowX === 'clip' || st.textOverflow === 'ellipsis';
+    const hiddenY = st.overflowY === 'hidden' || st.overflowY === 'clip';
+    const label = (el.textContent || el.className || '?').trim().replace(/\s+/g, ' ').slice(0, 30);
+    const rect: [number, number, number, number] = [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)];
+    if (hiddenX && el.scrollWidth > el.clientWidth + 2) problems.push({ label, reason: `texto cortado na largura (${el.scrollWidth} > ${el.clientWidth})`, rect });
+    else if (hiddenY && el.scrollHeight > el.clientHeight + 2) problems.push({ label, reason: `texto cortado na altura (${el.scrollHeight} > ${el.clientHeight})`, rect });
+  });
+  return problems;
+}
+
 /** Checa a tela atual. `minTouch` = tamanho mínimo confortável para dedo de criança. */
 export function fitCheck(minTouch = 40): { W: number; H: number; problems: FitProblem[] } {
   // Com a aba oculta as animações ficam paradas no primeiro quadro (ex.: um painel que
@@ -121,6 +160,7 @@ export function fitCheck(minTouch = 40): { W: number; H: number; problems: FitPr
     }
     if (Math.min(vw, vh) < minTouch) problems.push({ label, reason: `pequeno demais (${Math.round(Math.min(vw, vh))}px)`, rect });
   });
+  problems.push(...textCheck());
   return { W, H, problems };
 }
 

@@ -15,7 +15,8 @@ export const MOVEMENT = {
   jumpVelocity: 9.8,
   /** Soltar o botão cedo corta o pulo (pulo curto/longo). */
   jumpCutMultiplier: 0.5,
-  jumpBufferTime: 0.15,
+  /** Apertar pular um pouco ANTES de pousar continua valendo (seção 7.1). */
+  jumpBufferTime: 0.2,
   climbSpeed: 3.4,
   climbTopHop: 6.5,
   slideAccel: 14,

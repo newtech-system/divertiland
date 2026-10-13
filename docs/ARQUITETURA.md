@@ -134,3 +134,28 @@ await __fitGame()  // o mesmo dentro das fases (HUD, controles de toque e painé
 
 Tamanhos já verificados sem nenhum problema: 280×653, 320×568, 360×640, 390×844, 568×320,
 640×360, 768×1024, 844×390 e 1280×800.
+
+## Validação de percurso (o que a criança alcança)
+
+Pedido na seção 7.1 do prompt mestre V2: **medir** o que o personagem alcança antes de
+desenhar percurso, e validar cada travessia contra esses limites.
+
+| Arquivo | O que faz |
+|---|---|
+| `src/engine/physics/reachProbe.ts` | **Área de teste**: simula a física de verdade e mede altura do pulo, distância andando e correndo, tempo no ar, degrau automático e altura de cada quique de trampolim, por estilo de aventura |
+| `src/data/reach.ts` | Os números medidos, com a margem de segurança exigida em cada estilo (Preguiça 0,8 m / Macaco 0,5 m / Jaguar 0,35 m) |
+| `src/levels/exploration/layoutAudit.ts` | `auditLayout()` acusa item fora de alcance e plataforma isolada; `findTraps()` acusa **buraco sem saída** |
+| `tests/percurso.test.ts` | Roda tudo nas 8 fases 3D × 3 estilos; quebra se alguém mexer na física sem atualizar `reach.ts` |
+
+Medido hoje (Macaco): pulo **1,77 m** de altura, **4,05 m** de vão andando (6,15 m correndo),
+**2,19 m** de plataforma em que ainda dá para subir, **0,73 s** no ar, degrau automático de
+**0,42 m**, trampolim **4,49 → 6,15 → 8,07 → 9,97 m** por quique (com limite).
+
+**Como o detector de buracos funciona:** divide a fase em quadradinhos de 75 cm, descobre em
+que altura dá para ficar em pé no fundo de cada um, liga os vizinhos que o pulo alcança e
+acusa as "ilhas" de onde não se sai — ignorando as que já têm `killZone` (cair ali devolve ao
+ponto seguro, não é armadilha). Analisa o andar de baixo, que é onde se cai; armadilha em
+plataforma alta ainda precisa de olho humano.
+
+No navegador (`npm run dev`): `await __audit()` devolve as medidas e todos os problemas de
+percurso de todas as fases.

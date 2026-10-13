@@ -195,11 +195,41 @@ export class CharacterBody {
         this.pos.y = c.max.y;
         this.setGrounded(c, this.vel.y);
       } else if (delta > 0) {
+        // B06: raspar a QUINA de uma plataforma não pode cancelar o pulo. Se faltou pouco
+        // para passar, empurra de lado (correção de quina) em vez de parar a subida.
+        if (this.cornerNudge(c)) continue;
         this.pos.y = c.min.y - this.height;
         if (this.vel.y > 0) this.vel.y = 0;
         this.hitHead = true;
       }
     }
+  }
+
+  /**
+   * Correção de quina: subindo e encostando no canto de um bloco, desvia o personagem
+   * até 26 cm para o lado se com isso ele passa limpo. Só aceita se o lugar novo está
+   * livre, para não atravessar parede.
+   */
+  private cornerNudge(c: Collider): boolean {
+    if (c.shape !== 'box') return false;
+    const r = this.radius;
+    const MAX = 0.26;
+    const options: { axis: 'x' | 'z'; value: number; cost: number }[] = [
+      { axis: 'x' as const, value: c.min.x - r, cost: this.pos.x + r - c.min.x },
+      { axis: 'x' as const, value: c.max.x + r, cost: c.max.x - (this.pos.x - r) },
+      { axis: 'z' as const, value: c.min.z - r, cost: this.pos.z + r - c.min.z },
+      { axis: 'z' as const, value: c.max.z + r, cost: c.max.z - (this.pos.z - r) },
+    ].filter((o) => o.cost > 0 && o.cost <= MAX);
+    options.sort((a, b) => a.cost - b.cost);
+    for (const o of options) {
+      const old = this.pos[o.axis];
+      this.pos[o.axis] = o.value;
+      const [min, max] = this.boxAt();
+      const blocked = this.world.overlapping(min, max, []).some((x) => !x.oneWay && x.shape !== 'ramp');
+      if (!blocked) return true;
+      this.pos[o.axis] = old;
+    }
+    return false;
   }
 
   private depenetrate() {

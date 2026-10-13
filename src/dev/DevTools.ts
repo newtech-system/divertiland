@@ -89,6 +89,30 @@ export function installDevTools(game: GameManager) {
   (window as any).sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   (window as any).__routes = QA_ROUTES;
   (window as any).__fitCheck = () => fitCheck();
+  /** QA de percurso: alcance medido + itens fora de alcance + buracos sem saída. */
+  (window as any).__audit = async () => {
+    const { auditLayout, findTraps } = await import('../levels/exploration/layoutAudit');
+    const { measureAllStyles } = await import('../engine/physics/reachProbe');
+    const mods: Record<string, () => Promise<any>> = {
+      w1_l01: () => import('../data/levels/w1_l01').then((m) => m.LEVEL_W1_L01),
+      w1_l05: () => import('../data/levels/w1_l05').then((m) => m.LEVEL_W1_L05),
+      w1_l06: () => import('../data/levels/w1_l06').then((m) => m.LEVEL_W1_L06),
+      w1_l07: () => import('../data/levels/w1_l07').then((m) => m.LEVEL_W1_L07),
+      w1_l08: () => import('../data/levels/w1_l08').then((m) => m.LEVEL_W1_L08),
+      w1_l09: () => import('../data/levels/w1_l09').then((m) => m.LEVEL_W1_L09),
+      w1_l10: () => import('../data/levels/w1_l10').then((m) => m.LEVEL_W1_L10),
+      w1_s01: () => import('../data/levels/w1_s01').then((m) => m.LEVEL_W1_S01),
+    };
+    const report: Record<string, unknown> = { alcance: measureAllStyles() };
+    for (const [id, load] of Object.entries(mods)) {
+      const layout = await load();
+      for (const d of ['sloth', 'monkey', 'jaguar'] as DifficultyId[]) {
+        const problems = [...auditLayout(layout, d), ...findTraps(layout, d)];
+        if (problems.length) report[`${id}/${d}`] = problems;
+      }
+    }
+    return report;
+  };
   (window as any).__fitAll = () => fitAll(game);
   (window as any).__fitGame = () => fitGame(game);
   /** QA: roda todas as rotas em todos os estilos e devolve um relatório. */

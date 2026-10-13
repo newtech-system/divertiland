@@ -39,6 +39,22 @@ export class CheckpointManager {
     return { pos: { x: this.current.pos.x, y: this.current.pos.y + 0.1, z: this.current.pos.z + 0.8 }, yaw: this.current.yaw };
   }
 
+  /** Id usado para marcar "já ajudei neste trecho" (spawn conta como 'start'). */
+  respawnId(): string {
+    return this.current?.id ?? 'start';
+  }
+
+  /**
+   * Próximo ponto seguro depois do atual — para onde a ajuda "Vamos juntos?" conduz
+   * a criança (seção 6). Se já está no último, devolve null.
+   */
+  nextSafePoint(): V3 | null {
+    const order = this.current?.order ?? -1;
+    const next = this.list.filter((c) => c.order > order).sort((a, b) => a.order - b.order)[0];
+    if (!next) return null;
+    return { x: next.pos.x, y: next.pos.y + 0.1, z: next.pos.z };
+  }
+
   ids(): string[] {
     return this.list.map((c) => c.id);
   }

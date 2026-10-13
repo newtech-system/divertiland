@@ -40,6 +40,8 @@ export class RunnerLevel implements LevelRuntime {
   private baseSpeed = 11;
   private stumble = 0;
   private slideT = 0;
+  private assistT = 0;
+  private stuckT = 0;
   private hits = 0;
   private hitCooldown = 0;
   private chaserDist = 16;
@@ -140,6 +142,10 @@ export class RunnerLevel implements LevelRuntime {
       if (pressed.has('right')) this.changeLane(1);
       if (pressed.has('jump') || pressed.has('up')) this.jump();
       if (pressed.has('down')) this.slide();
+      // B22: continua abaixado ENQUANTO a criança segura (antes era um tempo fixo de
+      // 0,8 s — apertar um pouco antes da barra não valia e ela batia mesmo abaixando).
+      if (inp.downHeld && this.body.grounded) this.slideT = Math.max(this.slideT, 0.25);
+      this.assist(dt);
     }
 
     // Velocidade (aumenta aos poucos; tropeço diminui por um instante)
@@ -179,6 +185,7 @@ export class RunnerLevel implements LevelRuntime {
     // Bateu de frente em algo?
     this.hitCooldown = Math.max(0, this.hitCooldown - dt);
     if (this.started && !this.finished && this.speed > 2 && advanced < this.speed * dt * 0.4 && this.hitCooldown === 0) this.onHit();
+    this.unstick(dt, advanced);
 
     // Gatilhos (mensagens e chegada)
     const c = { x: b.pos.x, y: b.pos.y + 0.6, z: b.pos.z };
@@ -245,6 +252,82 @@ export class RunnerLevel implements LevelRuntime {
     this.slideT = 0.8;
     if (!b.grounded) b.vel.y = Math.min(b.vel.y, -10); // mergulha para baixo
     this.host.audio.play('whoosh', { pitch: 0.7 });
+  }
+
+  /**
+   * AJUDA DE CONTROLE do Bicho-Preguiça (seções 6 e 11): "auxílio para desvio/abaixar".
+   * Olha BEM na frente (tem de dar tempo de trocar de faixa duas vezes se precisar),
+   * escolhe a faixa com o caminho mais livre e abaixa sozinho nas barras.
+   * Não muda a missão nem a recompensa — só o esforço motor.
+   */
+  private assist(dt: number) {
+    if (this.host.params.hintLevel < 2) return; // só no estilo tranquilo
+    this.assistT = Math.max(0, this.assistT - dt);
+    const b = this.body;
+    const w = this.lvl.world;
+    const solid = (lane: number, y0: number, y1: number, z0: number, z1: number) =>
+      w
+        .overlapping({ x: laneX(lane) - 0.3, y: b.pos.y + y0, z: b.pos.z + z0 }, { x: laneX(lane) + 0.3, y: b.pos.y + y1, z: b.pos.z + z1 }, [])
+        .some((c) => c.shape === 'box' && c.surface !== 'trampoline');
+
+    // Abaixar: barra alta logo na frente e nada no chão para pular.
+    const barClose = solid(this.lane, 0.95, 1.5, 0.6, Math.max(2.5, this.speed * 0.5));
+    if (barClose && !solid(this.lane, 0.05, 0.8, 0.6, 2.5)) this.slideT = Math.max(this.slideT, 0.5);
+
+    if (this.assistT > 0) return;
+    // Quanto cada faixa está livre à frente (até 26 m), em passos de 2 m.
+    const clearance = ([-1, 0, 1] as const).map((lane) => {
+      for (let d = 1; d < 26; d += 2) if (solid(lane, 0.05, 2.4, d, d + 2)) return d;
+      return 26;
+    });
+    const cur = clearance[this.lane + 1];
+    if (cur < Math.max(5, this.speed * 1.1)) {
+      // Anda uma faixa na direção de quem está mais livre (atravessa a do meio se preciso).
+      let best = this.lane;
+      for (const lane of [-1, 0, 1] as const) if (clearance[lane + 1] > clearance[best + 1] + 1) best = lane;
+      if (best !== this.lane) {
+        const stepTo = this.lane + Math.sign(best - this.lane);
+        if (clearance[stepTo + 1] > 3) {
+          this.changeLane(Math.sign(best - this.lane));
+          this.assistT = 0.35;
+          return;
+        }
+      }
+      // Sem faixa livre: pular o obstáculo baixo é a saída.
+      if (b.grounded && !solid(this.lane, 1.6, 2.4, 0.6, 3)) {
+        this.jump();
+        this.assistT = 0.4;
+      }
+    }
+  }
+
+  /**
+   * NUNCA deixar a criança presa (seção 7.4). Se o personagem está empurrando um
+   * obstáculo e não avança há mais de 1 s, o jogo ajuda: passa por cima dele e avisa.
+   */
+  private unstick(dt: number, advanced: number) {
+    if (!this.started || this.finished) return;
+    if (this.speed > 2 && advanced < this.speed * dt * 0.25) this.stuckT += dt;
+    else this.stuckT = 0;
+    if (this.stuckT < 1) return;
+    this.stuckT = 0;
+    const b = this.body;
+    const w = this.lvl.world;
+    // Acha onde o obstáculo termina e coloca o personagem logo depois dele.
+    let z = b.pos.z;
+    for (let d = 0.5; d < 12; d += 0.5) {
+      const blocked = w
+        .overlapping({ x: b.pos.x - 0.3, y: b.pos.y + 0.05, z: b.pos.z + d }, { x: b.pos.x + 0.3, y: b.pos.y + 2.4, z: b.pos.z + d + 0.5 }, [])
+        .some((c) => c.shape === 'box' && c.surface !== 'trampoline');
+      if (!blocked) {
+        z = b.pos.z + d + 0.9;
+        break;
+      }
+    }
+    b.pos.z = z;
+    b.vel.y = Math.max(b.vel.y, 4);
+    this.host.audio.play('pop');
+    this.host.hud.toast('🤝', 'Deixa que eu ajudo!');
   }
 
   private canStand(): boolean {

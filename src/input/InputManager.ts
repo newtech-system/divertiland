@@ -14,6 +14,8 @@ export interface InputState {
   zoom: number;
   sprint: boolean;
   jumpHeld: boolean;
+  /** Abaixar SEGURANDO (corrida): fica agachado enquanto o dedo/tecla está pressionado. */
+  downHeld: boolean;
   /** Botões apertados NESTE quadro (borda de subida). */
   pressed: Set<ButtonAction>;
 }
@@ -49,6 +51,7 @@ export class InputManager {
     zoom: 0,
     sprint: false,
     jumpHeld: false,
+    downHeld: false,
     pressed: new Set(),
   };
   lastDevice: InputDevice = 'keyboard';
@@ -63,6 +66,7 @@ export class InputManager {
   private zoomAccum = 0;
   private virtualMove = { x: 0, y: 0 };
   private virtualJump = false;
+  private virtualDown = false;
   private dragging = false;
   private lastPointer = { x: 0, y: 0 };
   private gamepadPrev = new Set<number>();
@@ -130,9 +134,11 @@ export class InputManager {
   press(action: ButtonAction): void {
     this.pendingPressed.add(action);
     if (action === 'jump') this.virtualJump = true;
+    if (action === 'down') this.virtualDown = true;
   }
   release(action: ButtonAction): void {
     if (action === 'jump') this.virtualJump = false;
+    if (action === 'down') this.virtualDown = false;
   }
 
   /** Limpa tudo (ao trocar de tela, pausar etc.). */
@@ -143,6 +149,7 @@ export class InputManager {
     this.zoomAccum = 0;
     this.virtualMove = { x: 0, y: 0 };
     this.virtualJump = false;
+    this.virtualDown = false;
   }
 
   /** Chamado uma vez por quadro, antes do gameplay. */
@@ -167,6 +174,7 @@ export class InputManager {
     lookX += ((k('KeyL') ? 1 : 0) - (k('KeyJ') ? 1 : 0)) * 9;
     lookY += ((k('KeyK') ? 1 : 0) - (k('KeyI') ? 1 : 0)) * 6;
     let jumpHeld = k('Space') || this.virtualJump;
+    let downHeld = k('ArrowDown') || k('KeyS') || this.virtualDown;
     let sprint = k('ShiftLeft') || k('ShiftRight');
 
     // Gamepad
@@ -194,6 +202,7 @@ export class InputManager {
       edge(12, 'up');
       edge(13, 'down');
       if (now.has(0)) jumpHeld = true;
+      if (now.has(13)) downHeld = true;
       if (now.has(7) || now.has(5)) sprint = true;
       if (now.size) this.setDevice('gamepad');
       this.gamepadPrev = now;
@@ -207,13 +216,14 @@ export class InputManager {
     s.lookY = lookY * sens * (this.invertY ? -1 : 1);
     s.zoom = this.zoomAccum;
     s.jumpHeld = jumpHeld;
+    s.downHeld = downHeld;
     s.sprint = sprint;
     this.look = { x: 0, y: 0 };
     this.zoomAccum = 0;
 
     if (!this.enabled) {
       s.moveX = s.moveY = s.lookX = s.lookY = s.zoom = 0;
-      s.jumpHeld = s.sprint = false;
+      s.jumpHeld = s.sprint = s.downHeld = false;
       // Mantém só "pause" para poder sair de menus com Esc.
       const keepPause = s.pressed.has('pause');
       s.pressed = new Set(keepPause ? ['pause'] : []);

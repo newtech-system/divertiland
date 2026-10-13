@@ -165,6 +165,31 @@ describe('Loja, inventário e customização', () => {
     expect(s.inventory.owns('face_glasses_star')).toBe(true);
   });
 
+  // Cenário obrigatório 26.2 #7 do prompt mestre (e o relato B27):
+  // experimentar não cobra, comprar cobra UMA vez, equipar não cobra de novo.
+  it('provador não cobra, compra cobra uma vez, equipar não cobra', async () => {
+    const { s } = await setup();
+    s.currency.earn(500, 't');
+    const antes = s.currency.balance;
+    // Experimentar = só prévia do visual, nenhum débito
+    s.customization.resolveLook('mina', { face: 'face_glasses_star' });
+    s.customization.resolveLook('mina', { feet: 'feet_neon' });
+    expect(s.currency.balance).toBe(antes);
+    // Comprar: um débito só
+    const r1 = s.shop.purchase('face_glasses_star');
+    expect(r1.ok).toBe(true);
+    const depois = s.currency.balance;
+    expect(depois).toBeLessThan(antes);
+    // Clicar comprar de novo (dois toques, duas abas) não cobra outra vez
+    expect(s.shop.purchase('face_glasses_star')).toEqual({ ok: false, reason: 'owned' });
+    expect(s.currency.balance).toBe(depois);
+    // Equipar e desequipar: nunca cobra
+    s.customization.equip('face_glasses_star', 'mina');
+    s.customization.unequip('face', 'mina');
+    s.customization.equip('face_glasses_star', 'mina');
+    expect(s.currency.balance).toBe(depois);
+  });
+
   it('não compra sem saldo, item repetido ou item que não é da loja', async () => {
     const { s } = await setup();
     expect(s.shop.purchase('back_cape_hero')).toEqual({ ok: false, reason: 'noFunds' });

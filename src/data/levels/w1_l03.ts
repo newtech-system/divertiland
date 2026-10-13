@@ -110,10 +110,13 @@ export function buildRunnerCourse(difficulty: DifficultyId): RunnerCourse {
     [[0, 'high'], [-1, 'block']],
   ];
   for (const row of rows) {
+    // B09: no Bicho-Preguiça NUNCA fecham duas faixas na mesma fileira — trocar duas
+    // faixas de uma vez é esforço motor demais para quem está começando.
+    let tall = 0;
     for (const [lane, kind] of row) {
       if (kind === 'low') low(z, lane);
       else if (kind === 'high') high(z, lane);
-      else block(z, lane, 2.5);
+      else block(z, lane, 2.5, ++tall > 1 ? ['sloth'] : undefined);
     }
     const free = ([-1, 0, 1] as Lane[]).find((l) => !row.some(([rl]) => rl === l));
     if (free !== undefined) coins(z - 6, z + 3, free);
@@ -154,10 +157,11 @@ export function buildRunnerCourse(difficulty: DifficultyId): RunnerCourse {
     [[-1, 'high'], [0, 'high'], [1, 'high']],
   ];
   for (const row of rows2) {
+    let tall2 = 0;
     for (const [lane, kind] of row) {
       if (kind === 'low') low(z, lane);
       else if (kind === 'high') high(z, lane);
-      else block(z, lane, 3, row.length === 3 && difficulty === 'sloth' ? ['sloth'] : undefined);
+      else block(z, lane, 3, ++tall2 > 1 ? ['sloth'] : undefined);
     }
     const free = ([-1, 0, 1] as Lane[]).filter((l) => !row.some(([rl, k]) => rl === l && k === 'block'));
     if (free.length) coins(z - 5, z + 4, free[0]);
@@ -178,7 +182,9 @@ export function buildRunnerCourse(difficulty: DifficultyId): RunnerCourse {
   msg('r_zig', z - 6, 'Zigue-zague! Esquerda, direita...', '🐍', undefined, false);
   const zig: Lane[] = [1, -1, 0, 1, -1, 0];
   zig.forEach((free, i) => {
-    for (const l of [-1, 0, 1] as Lane[]) if (l !== free) block(z + i * 14, l, 2.5, i % 2 && l === 0 ? ['sloth'] : undefined);
+    // No estilo tranquilo fica só UM bloco por fileira (sempre a faixa mais distante da livre).
+    const slothBlocked = ([-1, 0, 1] as Lane[]).filter((l) => l !== free).sort((a, b) => Math.abs(b - free) - Math.abs(a - free))[0];
+    for (const l of [-1, 0, 1] as Lane[]) if (l !== free) block(z + i * 14, l, 2.5, l === slothBlocked ? undefined : ['sloth']);
     coins(z + i * 14 - 4, z + i * 14 + 3, free, 0.8, 4);
   });
   z += zig.length * 14 + 14;

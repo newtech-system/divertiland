@@ -137,6 +137,34 @@ export interface BuiltLevel {
   pads: PadInfo[];
   questGates: QuestGateInfo[];
   tagFriends: TagFriendInfo[];
+  /**
+   * Seção 7.2: coisas que podem ficar NA FRENTE da criança (placas, bandeiras de
+   * checkpoint, balões). Ficam transparentes quando entram entre a câmera e o
+   * personagem — nunca mais uma placa "Plataformas" cobrindo o salto (B07/B08).
+   */
+  fadeables: FadeableInfo[];
+  /** Enfeites que dão uma reaçãozinha quando a criança encosta (não são prêmio). */
+  touchables: TouchableInfo[];
+}
+
+export interface TouchableInfo {
+  obj: THREE.Object3D;
+  pos: V3;
+  radius: number;
+  wobble: number;
+  baseY: number;
+}
+
+/** Enfeites que a criança costuma confundir com recompensa. */
+const DECOR_REACTS = new Set(['present', 'balloon', 'cake', 'gift']);
+
+export interface FadeableInfo {
+  object: THREE.Object3D;
+  center: THREE.Vector3;
+  radius: number;
+  materials: THREE.Material[];
+  baseOpacity: number[];
+  faded: number;
 }
 
 export interface BuildContext {
@@ -265,6 +293,8 @@ export class LevelBuilder {
       pads: [],
       questGates: [],
       tagFriends: [],
+      fadeables: [],
+      touchables: [],
     };
     const coinPositions: { pos: THREE.Vector3; kind: 'coin' | 'gem'; block?: BumpBlock }[] = [];
 
@@ -469,6 +499,17 @@ export class LevelBuilder {
         if (e.model) {
           // Modelo real no lugar do brinquedo provisório (a colisão continua pela caixa do provisório).
           this.realModel(e.model, v(e.pos), e.rotY ?? 0, () => o.root.add(obj));
+          if (e.solid) {
+            const b = new THREE.Box3().setFromObject(obj);
+            this.solid({ x: b.min.x, y: b.min.y, z: b.min.z }, { x: b.max.x, y: b.max.y, z: b.max.z });
+          }
+          break;
+        }
+        // Enfeites que PARECEM presente/recompensa (B33): ficam fora do lote estático e
+        // dão uma reaçãozinha ao toque ("é enfeite, não é prêmio") — seção 16.
+        if (DECOR_REACTS.has(e.kind)) {
+          o.root.add(obj);
+          o.touchables.push({ obj, pos: v(e.pos), radius: 0.9 * (e.scale ?? 1), wobble: 0, baseY: e.pos[1] });
           if (e.solid) {
             const b = new THREE.Box3().setFromObject(obj);
             this.solid({ x: b.min.x, y: b.min.y, z: b.min.z }, { x: b.max.x, y: b.max.y, z: b.max.z });
@@ -963,6 +1004,32 @@ export class LevelBuilder {
     });
   }
 
+  /**
+   * Registra um objeto que deve sumir (ficar translúcido) quando tapa a visão.
+   * Clona os materiais: os materiais do jogo são compartilhados por cor, e mexer na
+   * opacidade de um material compartilhado apagaria meio cenário.
+   */
+  private fadeable(obj: THREE.Object3D, radius: number) {
+    const materials: THREE.Material[] = [];
+    const baseOpacity: number[] = [];
+    obj.traverse((c) => {
+      const m = c as THREE.Mesh;
+      if (!m.isMesh) return;
+      const list = Array.isArray(m.material) ? m.material : [m.material];
+      const cloned = list.map((mm) => {
+        const n = (mm as THREE.Material).clone();
+        n.transparent = true;
+        materials.push(n);
+        baseOpacity.push(n.opacity);
+        return n;
+      });
+      m.material = Array.isArray(m.material) ? cloned : cloned[0];
+    });
+    const center = new THREE.Vector3();
+    new THREE.Box3().setFromObject(obj).getCenter(center);
+    this.out.fadeables.push({ object: obj, center, radius, materials, baseOpacity, faded: 0 });
+  }
+
   private checkpoint(id: string, p: V3, yaw: number) {
     const o = this.out;
     const g = new THREE.Group();
@@ -980,6 +1047,7 @@ export class LevelBuilder {
     g.add(pole, base, flag, star);
     g.rotation.y = yaw;
     o.root.add(g);
+    this.fadeable(g, 1.4);
     o.updaters.push((t) => {
       flag.rotation.y = Math.sin(t * 3 + p.x) * 0.25;
       star.rotation.y = t * 2;
@@ -1308,16 +1376,16 @@ export class LevelBuilder {
 
   private sign(p: V3, yaw: number, text: string, color: string, w: number, h: number) {
     const tex = textTexture(text, { color: '#ffffff', bg: color, font: text.length > 12 ? 70 : 110, width: 1024, height: 512 });
-    const mat = toon('#ffffff', { map: tex, unlit: true });
-    const g = new THREE.PlaneGeometry(w, h);
-    const m = new THREE.Matrix4().makeRotationY(yaw);
-    m.setPosition(p.x, p.y, p.z);
-    this.batch.add(g, mat, m);
-    const back = new THREE.BoxGeometry(w + 0.15, h + 0.15, 0.08);
-    const mb = new THREE.Matrix4().makeRotationY(yaw);
-    const off = new THREE.Vector3(0, 0, -0.06).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-    mb.setPosition(p.x + off.x, p.y, p.z + off.z);
-    this.batch.add(back, toon('#ffffff'), mb);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), toon('#ffffff', { map: tex, unlit: true }));
+    const back = new THREE.Mesh(new THREE.BoxGeometry(w + 0.15, h + 0.15, 0.08), toon('#ffffff'));
+    back.position.z = -0.06;
+    const g = new THREE.Group();
+    g.add(face, back);
+    g.position.set(p.x, p.y, p.z);
+    g.rotation.y = yaw;
+    this.out.root.add(g);
+    // A placa é informação, não parede: se entrar na frente da criança, fica translúcida.
+    this.fadeable(g, Math.max(w, h) * 0.6);
   }
 
   private decor(e: Extract<LayoutEntity, { t: 'decor' }>) {
@@ -1380,6 +1448,7 @@ export class LevelBuilder {
         }
         this.colorIdx++;
         o.root.add(g);
+        this.fadeable(g, 1.2); // balões não podem tapar a próxima plataforma (B08)
         const ph = this.rand() * 6;
         o.updaters.push((t) => {
           g.position.y = p.y + Math.sin(t * 1.3 + ph) * 0.12;
@@ -1388,14 +1457,16 @@ export class LevelBuilder {
         break;
       }
       case 'star': {
-        const star = new THREE.Mesh(starGeo(0.6 * size, 0.28 * size, 0.18 * size), toon(color, { emissive: 0.5 }));
+        // B03/seção 16: ENFEITE. Estrela de enfeite não gira, não flutua e não brilha —
+        // só o que é coletável tem brilho e movimento de coleta. Ela fica presa num
+        // suporte, como um enfeite pendurado de verdade.
+        const star = new THREE.Mesh(starGeo(0.6 * size, 0.28 * size, 0.18 * size), toon(color));
         star.position.set(p.x, p.y, p.z);
-        o.root.add(star);
-        const ph = this.rand() * 6;
-        o.updaters.push((t) => {
-          star.rotation.y = t * 0.8 + ph;
-          star.position.y = p.y + Math.sin(t + ph) * 0.2;
-        });
+        star.rotation.z = 0.12;
+        const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.9 * size, 6), toon('#e8e2f6'));
+        stick.position.set(p.x, p.y + 0.55 * size, p.z);
+        this.batch.add(star.geometry, star.material as THREE.Material, star.matrixWorld.clone().identity().makeRotationZ(0.12).setPosition(p.x, p.y, p.z));
+        this.batch.add(stick.geometry, stick.material as THREE.Material, m4(p.x, p.y + 0.55 * size, p.z));
         break;
       }
       case 'lightPanel': {
@@ -1444,6 +1515,11 @@ export class LevelBuilder {
       geo.addGroup(0, sideCount, 0);
       geo.addGroup(sideCount, idx.count - sideCount, 1);
       const mesh = new THREE.InstancedMesh(geo, mat, coins.length);
+      // B01: as moedas MUDAM de lugar a cada quadro (giro, flutuação, ímã). O three.js
+      // calcula a esfera de visibilidade do lote UMA vez, quando as moedas ainda estão
+      // todas na origem — depois o lote inteiro era descartado assim que a origem saía da
+      // tela ("as moedas somem quando eu chego perto"). São poucas dezenas: não cortar.
+      mesh.frustumCulled = false;
       o.coinMeshes.coin = mesh;
       o.root.add(mesh);
     }
@@ -1451,6 +1527,7 @@ export class LevelBuilder {
       const geo = new THREE.OctahedronGeometry(0.42, 0);
       geo.scale(1, 1.3, 1);
       const mesh = new THREE.InstancedMesh(geo, toon(PALETTE.pink, { emissive: 0.5 }), gems.length);
+      mesh.frustumCulled = false; // mesmo motivo do B01 acima
       o.coinMeshes.gem = mesh;
       o.root.add(mesh);
     }

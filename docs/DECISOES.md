@@ -23,8 +23,21 @@ Decisões tomadas de forma autônoma (reversíveis), conforme combinado no docum
   e seguir; no puzzle, errar = a porta pisca e tenta de novo; mensagens sempre positivas.
 - **Bicho-Preguiça** recebe: checkpoints e escadinhas extras, plataformas maiores, obstáculos mais
   lentos, ímã de moedas maior, trilha de brilhos e dicas, mais dicas nos puzzles.
-- **Jaguar** recebe: obstáculos mais rápidos, plataformas menores, rotas especiais com gemas,
-  cronômetro, menos dicas, recompensa maior.
+- **Jaguar** recebe: rotas especiais com gemas, obstáculos mais rápidos, cronômetro opcional,
+  menos dicas e recompensa maior. **Mudança (Marco 1 do prompt V2):** as plataformas do Jaguar
+  voltaram ao tamanho normal (antes encolhiam 15%) e as tolerâncias de pulo continuam valendo
+  nele. Motivo: a seção 6 do documento é explícita — no Jaguar o desafio é de *decisão, rota e
+  enigma*, nunca salto fora do alcance ou controle pior.
+- **Assistência de controle ≠ complexidade da missão** (seção 6). São dois eixos separados:
+  o Bicho-Preguiça ganha ajuda motora (pulo automático na beirada, "Vamos juntos?", desvio e
+  abaixar automáticos na corrida) **sem** perder a missão, a história ou a recompensa base.
+- **Ninguém fica preso**: 3,5 s empurrando sem sair do lugar (ou 1 s na corrida) e o jogo
+  resolve — leva ao ponto seguro ou passa por cima do obstáculo, sempre com uma fala gentil.
+- **Nada tapa a visão** (seção 7.2): placas, bandeiras de checkpoint e balões ficam
+  translúcidos quando entram entre a câmera e a criança.
+- **Três categorias visuais** (seção 16): enfeite (fosco e parado), interação (ícone) e
+  coletável (brilho + movimento). Enfeite que parece prêmio dá um "boing" ao toque, para
+  ficar claro que é enfeite — sem prometer recompensa.
 - **Compra em 2 toques** (confirmação) para evitar compra acidental; nenhum dinheiro real, sem loot box.
 - **Perfis múltiplos** no mesmo aparelho (irmãos); só o apelido é guardado.
 - **Área dos pais** (nos Ajustes): mostra as habilidades trabalhadas (`skillFocus`) — nunca exibidas
