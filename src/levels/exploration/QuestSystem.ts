@@ -6,6 +6,7 @@ import { textTexture } from '../../engine/materials';
 import { CharacterBody } from '../../engine/physics/CharacterBody';
 import type { V3 } from '../../engine/physics/PhysicsWorld';
 import type { BuiltLevel, FriendInfo, PadInfo } from './LevelBuilder';
+import type { QuestDef } from './LayoutTypes';
 
 export interface QuestHooks {
   say(name: string, icon: string, text: string): void;
@@ -128,9 +129,14 @@ export class QuestSystem {
     if (st === 'new') {
       h.say(d.name, d.icon, ph.intro);
       this.friendState.set(d.id, 'active');
+      // Acolher alguém já é uma etapa: a criança ouviu a história e entendeu o pedido.
+      if ((this.friendPhase.get(d.id) ?? 0) === 0 && d.stageMeet) h.stageDone(d.stageMeet);
       if (ph.mission) h.mission(ph.mission);
       if (ph.quest.type === 'pads' && ph.quest.memory) this.startMemory(ph.quest.group);
       h.audio.play('pop');
+      // A criança pode ter pegado os objetos ANTES de conversar. Sem esta verificação o
+      // amigo ficava esperando para sempre e a missão travava (o portão nunca abria).
+      this.alreadyDone(ph.quest);
       return;
     }
     if (st === 'active') {
@@ -159,6 +165,19 @@ export class QuestSystem {
       return;
     }
     h.say(d.name, d.icon, ph.hint ?? ph.thanks);
+  }
+
+  /** A missão que acabou de começar já está cumprida? Então já pode agradecer. */
+  private alreadyDone(quest: QuestDef): void {
+    const group = quest.group;
+    if (quest.type === 'collect') {
+      const got = this.lvl.questItems.filter((q) => q.def.group === group && q.taken).length;
+      if (got >= quest.count) this.questReady(group);
+      return;
+    }
+    if (quest.memory) return; // sequência de memória sempre começa de novo
+    const pads = this.lvl.pads.filter((p) => p.def.group === group);
+    if (pads.length > 0 && pads.every((p) => p.lit)) this.questReady(group);
   }
 
   private friendBubble(f: FriendInfo, icon: string) {
@@ -368,6 +387,40 @@ export class QuestSystem {
     const sp = Math.hypot(b.vel.x, b.vel.z);
     if (sp > 0.3) o.rotation.y = Math.atan2(b.vel.x, b.vel.z) - Math.PI / 2;
     o.rotation.z = r.tagged ? 0 : Math.sin(this.t * 14) * Math.min(0.15, sp * 0.03);
+  }
+
+  /**
+   * ESTADO DA MISSÃO PARA SALVAR (seção 7.4).
+   * Guarda o que não pode se perder ao sair no meio: as flags (portões já abertos,
+   * entregas já feitas) e em que ponto da conversa cada amigo está.
+   */
+  saveState(): { flags: string[]; friends: string[] } {
+    const friends: string[] = [];
+    for (const [id, st] of this.friendState) friends.push(`${id}:${st}:${this.friendPhase.get(id) ?? 0}`);
+    return { flags: [...this.flags], friends };
+  }
+
+  /**
+   * Retoma uma partida salva. Os objetos de missão da missão ATUAL voltam ao lugar
+   * (recomeçar uma coleta pela metade é justo); o que já foi entregue continua entregue.
+   */
+  restore(flags: string[], friends: string[]): void {
+    for (const f of flags) this.flags.add(f);
+    for (const entry of friends) {
+      const [id, st, phase] = entry.split(':');
+      const f = this.lvl.friends.find((x) => x.def.id === id);
+      if (!f) continue;
+      const state: FriendState =
+        st === 'done' ? 'done' : st === 'ready' ? 'ready' : st === 'active' ? 'active' : 'new';
+      const ph: FriendPhase = phase === '1' && f.def.quest2 ? 1 : 0;
+      this.friendPhase.set(id, ph);
+      // Um amigo "ready" (missão cumprida, falta agradecer) volta como ready: os itens
+      // reaparecem, mas quem já cumpriu não precisa cumprir de novo.
+      this.friendState.set(id, state);
+      if (state === 'done') this.friendBubble(f, '💛');
+      else if (state === 'ready' || (state === 'new' && ph === 1)) this.friendBubble(f, '❗');
+    }
+    this.openGates();
   }
 
   /** Para testes: liga uma flag e abre portões dependentes. */

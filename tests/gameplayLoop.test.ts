@@ -249,12 +249,17 @@ describe('Loja, inventário e customização', () => {
 });
 
 describe('Baús', () => {
-  it('baú abre com estrelas suficientes e só uma vez', async () => {
+  // As estrelas que abrem os baús agora são as das CINCO AVENTURAS (a campanha tem 15):
+  // as fases antigas já não dão estrela de campanha, então contar `levels` deixaria os
+  // baús inalcançáveis para sempre.
+  it('baú abre com estrelas de AVENTURA suficientes e só uma vez', async () => {
     const { s } = await setup();
     const p = s.profiles.active!;
-    p.levels.w1_l01 = { ...s.progression.progress('w1_l01'), completed: true, bestStars: 3 };
-    expect(s.progression.openChest('w1_chest_1')).toBeNull(); // 3 < 5
-    p.levels.w1_l02 = { ...s.progression.progress('w1_l02'), completed: true, bestStars: 2 };
+    p.adventures.a01 = { ...s.adventures.ensure('a01'), objectivesMet: ['completed', 'a01_segredo'] };
+    expect(s.adventures.totalStars()).toBe(2);
+    expect(s.progression.openChest('w1_chest_1')).toBeNull(); // 2 < 4
+    p.adventures.a02 = { ...s.adventures.ensure('a02'), objectivesMet: ['completed', 'a02_organizar'] };
+    expect(s.adventures.totalStars()).toBe(4);
     const res = s.progression.openChest('w1_chest_1');
     expect(res?.divertis).toBe(30);
     expect(s.inventory.owns('top_tee_gold')).toBe(true);

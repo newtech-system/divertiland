@@ -198,6 +198,11 @@ function sanitizeInProgress(v: unknown): InProgressRun | null {
     collectiblesFound: strArray(v.collectiblesFound),
     elapsedSec: num(v.elapsedSec, 0, 0, 1e6),
     savedAt: int(v.savedAt, Date.now(), 0, 1e15),
+    // Estado da missão: sem isto, continuar a aventura perdia as etapas e as flags
+    // (portões já abertos), o que podia prender a criança atrás de uma porta.
+    stagesDone: strArray(v.stagesDone),
+    questFlags: strArray(v.questFlags),
+    questFriends: strArray(v.questFriends),
   };
 }
 
@@ -384,7 +389,7 @@ const MIGRATIONS: Record<number, Migration> = {
       for (const adv of ADVENTURES) {
         if (advs[adv.id]?.completed) {
           keys.add(`${p.id}:${adv.id}:primeira`);
-          for (const g of advs[adv.id].goldens ?? []) keys.add(`${p.id}:golden:${g}`);
+          for (const g of advs[adv.id].goldens ?? []) keys.add(`${p.id}:${adv.id}:dourado:${g}`);
         }
       }
       p.grantedKeys = [...keys];

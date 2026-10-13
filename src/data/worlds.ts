@@ -256,14 +256,63 @@ export const WORLDS: WorldDef[] = [
     musicId: 'world1',
     levels,
     chests: [
-      { id: 'w1_chest_1', stars: 5, divertis: 30, itemId: 'top_tee_gold', map: { x: 82, y: 2.4 } },
-      { id: 'w1_chest_2', stars: 12, divertis: 60, itemId: 'back_wings', map: { x: 16, y: 6.4 } },
-      { id: 'w1_chest_3', stars: 24, divertis: 120, itemId: 'skin_golden', map: { x: 80, y: 8.7 } },
+      // Metas ajustadas às CINCO aventuras: a campanha tem 15 estrelas no total
+      // (antes eram 30 em dez fases, e a meta de 24 ficou impossível).
+      { id: 'w1_chest_1', stars: 4, divertis: 30, itemId: 'top_tee_gold', map: { x: 82, y: 2.4 } },
+      { id: 'w1_chest_2', stars: 9, divertis: 60, itemId: 'back_wings', map: { x: 16, y: 6.4 } },
+      { id: 'w1_chest_3', stars: 14, divertis: 120, itemId: 'skin_golden', map: { x: 80, y: 8.7 } },
     ],
   },
 ];
 
-export const ALL_LEVELS: LevelData[] = WORLDS.flatMap((w) => w.levels);
+/**
+ * Fases que NÃO ficam no caminho do mapa antigo: o conteúdo definitivo da Aventura 1 e
+ * o terreno do Meu Mundo. Quem decide quando elas aparecem é o mapa das aventuras.
+ */
+export const EXTRA_LEVELS: LevelData[] = [
+  {
+    id: 'a01',
+    worldId: W1,
+    order: 1,
+    name: 'O Ursinho e o Caminho da Gentileza',
+    tagline: 'Uma criança perdeu o ursinho dela. Vamos ajudar?',
+    icon: '🧸',
+    type: 'exploration3D',
+    size: 'main',
+    skillFocus: ['observation', 'empathy', 'spatial_awareness'],
+    guide: 'jhow',
+    unlock: {},
+    // As estrelas da aventura são avaliadas pelo AdventureService (data/adventures.ts);
+    // aqui ficam os mesmos objetivos para o HUD mostrar durante a partida.
+    objectives: [
+      { id: 'a01_ajuda', type: 'flag', flag: 'helpedExtra', icon: '🤝', label: 'Faça uma ajuda a mais no parque' },
+      { id: 'a01_segredo', type: 'secret', secretId: 'a01_sala_secreta', icon: '🔍', label: 'Descubra a sala secreta' },
+    ],
+    contentId: 'a01',
+    implemented: true,
+    map: { x: 50, y: 0, style: 'normal' },
+  },
+  {
+    id: 'meu_mundo',
+    worldId: W1,
+    order: 98,
+    name: 'Meu Mundo Divertiland',
+    tagline: 'O seu terreno para explorar — construir chega em breve!',
+    icon: '🏡',
+    type: 'sandbox',
+    size: 'short',
+    skillFocus: ['creativity', 'spatial_awareness'],
+    guide: 'mina',
+    unlock: {},
+    objectives: [],
+    contentId: 'meu_mundo',
+    implemented: true,
+    sandbox: true,
+    map: { x: 50, y: 0, style: 'normal' },
+  },
+];
+
+export const ALL_LEVELS: LevelData[] = [...WORLDS.flatMap((w) => w.levels), ...EXTRA_LEVELS];
 
 export function getLevel(id: string): LevelData | undefined {
   return ALL_LEVELS.find((l) => l.id === id);

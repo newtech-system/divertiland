@@ -73,6 +73,18 @@ export interface InProgressRun {
   collectiblesFound: string[];
   elapsedSec: number;
   savedAt: number;
+  /**
+   * ETAPAS INTERNAS já concluídas nesta partida (seção 8). Sem isto, continuar uma
+   * aventura apagava as etapas e a criança refazia a história desde o começo.
+   */
+  stagesDone?: string[];
+  /**
+   * Flags de missão ligadas (entrega feita, portão aberto). Sem isto, continuar podia
+   * deixar a criança do lado errado de um portão que ela já tinha aberto.
+   */
+  questFlags?: string[];
+  /** Estado de cada amigo, no formato "id:estado:fase". */
+  questFriends?: string[];
 }
 
 export interface ProfileData {

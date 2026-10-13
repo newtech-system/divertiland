@@ -23,7 +23,9 @@ export type LevelType =
   | 'tasks'
   | 'trampoline'
   | 'hideAndSeek'
-  | 'bonusMix';
+  | 'bonusMix'
+  /** Espaço livre (Meu Mundo): explorar sem estrela e sem conclusão. */
+  | 'sandbox';
 
 /** Duração/peso da fase — usado pela economia (seção 20 e 23). */
 export type LevelSize = 'short' | 'normal' | 'main' | 'bonus';

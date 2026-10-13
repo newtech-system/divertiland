@@ -195,6 +195,24 @@ export function auditLayout(layout: LevelLayout, diff: DifficultyId): AuditIssue
       const r = canPick(e.pos, REACH.pickup.collectible);
       if (!r.ok) issues.push({ kind: 'item-fora-de-alcance', what: `item de missão ${e.id}`, pos: e.pos, detail: r.best });
     }
+    // Com quem a criança precisa CONVERSAR, onde ela precisa PISAR e a CHEGADA também
+    // têm de estar ao alcance: uma missão inalcançável trava a aventura inteira.
+    if (e.t === 'friend') {
+      const r = canPick(e.pos, 1.4);
+      if (!r.ok) issues.push({ kind: 'item-fora-de-alcance', what: `amigo ${e.id}`, pos: e.pos, detail: r.best });
+    }
+    if (e.t === 'pad') {
+      const r = canPick(e.pos, 0.4);
+      if (!r.ok) issues.push({ kind: 'item-fora-de-alcance', what: `botão de chão ${e.id}`, pos: e.pos, detail: r.best });
+    }
+    if (e.t === 'button') {
+      const r = canPick(e.pos, 1.4);
+      if (!r.ok) issues.push({ kind: 'item-fora-de-alcance', what: `botão ${e.id}`, pos: e.pos, detail: r.best });
+    }
+    if (e.t === 'finish') {
+      const r = canPick(e.pos, 0.8);
+      if (!r.ok) issues.push({ kind: 'item-fora-de-alcance', what: 'chegada', pos: e.pos, detail: r.best });
+    }
     if (e.t === 'coinLine' || e.t === 'coinArc') {
       const pts: Vec3[] = e.t === 'coinLine' ? [e.from, e.to] : [[e.center[0], e.center[1] + (e.height ?? 1.5), e.center[2]]];
       for (const p of pts) {

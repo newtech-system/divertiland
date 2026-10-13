@@ -6,6 +6,50 @@ import type { AutoWaypoint } from '../levels/exploration/Exploration3DLevel';
  * Se mudar o desenho de uma fase, atualize a rota correspondente.
  */
 export const QA_ROUTES: Record<string, AutoWaypoint[]> = {
+  a01: [
+    // --- etapa 1: entrada, balão do Dino (estrela bônus), corredor, blocos e túnel
+    { x: -5.6, z: -6.9, radius: 0.6 }, { x: 0, z: 2 }, { x: 0, z: 16 }, { x: 5.8, z: 21, radius: 1.0 }, { x: 5.8, z: 23.4, radius: 1.0 }, { x: 0, z: 14 },
+    { x: -5.5, z: 8.6, radius: 1.3, talk: true, wait: 0.6 }, { x: -5.5, z: 8.6, radius: 1.3, talk: true, wait: 0.6 },
+    { x: 0, z: 10 }, { x: 0, z: 30 }, { x: 0, z: 33.8, y: 0.8 }, { x: 0, z: 36, y: 0 }, { x: 0, z: 37.9, y: 1.3 },
+    { x: 0, z: 40, y: 0 }, { x: 0, z: 55 }, { x: -2.5, z: 56.5, cp: true },
+    // --- blocos malucos, rede, ponte (peça de apoio #1) e praça
+    { x: -8, z: 58 }, { x: -8, z: 79 }, { x: 3, z: 80.5 }, { x: 7, z: 74, y: 0.7 }, { x: 7.7, z: 76.5, y: 1.4 },
+    { x: 7.7, z: 78.9, y: 2.3, radius: 0.9 }, { x: 4, z: 81 }, { x: 0, z: 82 }, { x: 0, z: 88, y: 4 }, { x: -2.2, z: 87, y: 4, cp: true },
+    { x: 0, z: 91, y: 4 }, { x: 0, z: 96, y: 4, radius: 1.0 }, { x: 0, z: 101, y: 4 }, { x: 0, z: 105, y: 4, cp: true },
+    // --- etapa 2: acolher a Bia
+    { x: 3.5, z: 106, y: 4, radius: 1.4, talk: true, wait: 0.8 },
+    // --- etapa 3, pista 1: cair na piscina de bolinhas e voltar pela rede amarela
+    { x: -4, z: 100, y: 0, radius: 1.6 }, { x: -5, z: 96, y: 0, radius: 1.2 }, { x: -2.7, z: 100.6, y: 0 },
+    { x: -2.7, z: 104, y: 4 },
+    // --- pista 2: botão vermelho, portinha e a SALA SECRETA
+    { x: -6, z: 109, y: 4 }, { x: -6, z: 114, y: 4 }, { x: -5.4, z: 114.6, y: 4, radius: 1.0, talk: true, wait: 0.5 },
+    { x: -6.5, z: 120.5, y: 4, radius: 1.0 }, { x: -6.5, z: 126, y: 4 }, { x: -10.5, z: 126, y: 4 },
+    { x: -12, z: 126, y: 4 }, { x: -9, z: 126, y: 4 }, { x: -6.5, z: 122, y: 4 }, { x: -6, z: 112, y: 4 },
+    { x: 0, z: 107, y: 4 },
+    // --- pista 3 e peça de apoio #2: caminho das plataformas
+    { x: 6, z: 109.5, y: 4 }, { x: 6, z: 112.4, y: 4 }, { x: 4.8, z: 115.5, y: 4 },
+    { x: 6, z: 119.5, y: 4, needGround: true, radius: 1.3 }, { x: 6, z: 123, y: 4, radius: 1.2 },
+    { x: 5, z: 126.5, y: 4.6, radius: 1.2 }, { x: 7, z: 129.5, y: 4 }, { x: 5.4, z: 132.4, y: 4 },
+    { x: 2, z: 136, y: 4 }, { x: 4, z: 137, y: 4, cp: true },
+    // --- etapa 4: o Beto encaixa as duas peças e a porta do recanto abre
+    { x: -4.6, z: 137.8, y: 4, radius: 1.4, talk: true, wait: 0.8 },
+    { x: -4.6, z: 137.8, y: 4, radius: 1.4, talk: true, wait: 0.8 },
+    // --- etapa 5: o ursinho certo (laço rosa) + o ursinho dourado do recanto
+    { x: -11, z: 138, y: 4, cp: true }, { x: -12.4, z: 140.5, y: 4, radius: 0.6 },
+    { x: -13.8, z: 144.6, y: 4, radius: 0.9, talk: true, wait: 0.5 },
+    { x: -10.9, z: 145, y: 4, radius: 0.9, talk: true, wait: 0.5 },
+    { x: -14.2, z: 134, y: 5.6, radius: 1.0 }, { x: -12.2, z: 135, y: 6.8, radius: 1.0 },
+    { x: -11, z: 138, y: 4 }, { x: -6, z: 137, y: 4 },
+    // --- volta e devolve na mão da Bia
+    { x: -6.5, z: 132, y: 4 }, { x: -6.5, z: 120, y: 4 }, { x: -6, z: 112, y: 4 }, { x: 0, z: 107, y: 4 },
+    { x: 3.5, z: 106.4, y: 4, radius: 1.4, talk: true, wait: 0.8 },
+    { x: 3.5, z: 106.4, y: 4, radius: 1.4, talk: true, wait: 0.8 },
+    { x: 3.5, z: 106.4, y: 4, radius: 1.4, talk: true, wait: 0.8 },
+    // --- etapa 6: escorregador, trampolins e a festa da chegada
+    { x: -6.5, z: 113, y: 4 }, { x: -6.5, z: 130, y: 4 }, { x: -4, z: 137, y: 4 }, { x: 0, z: 139, y: 4 },
+    { x: 0, z: 157, y: 0 }, { x: -3, z: 158.5, cp: true }, { x: 0, z: 173, bounceTo: 8.4, bounces: 3 },
+    { x: 0, z: 178, y: 7 }, { x: 0, z: 182, y: 7 },
+  ],
   w1_l10: [
     { x: 0, z: 30, cp: true, devFlag: 'memDoor', wait: 0.5 }, { x: 0, z: 42, cp: true }, { x: 0, z: 47.2, bounceTo: 7.0, bounces: 3 },
     { x: 0, z: 52.5, y: 6 }, { x: -4.5, z: 52, y: 6, cp: true }, { x: 0, z: 56.8, bounceTo: 13.2, bounces: 3 }, { x: 0, z: 61, y: 12 },
@@ -27,7 +71,7 @@ export const QA_ROUTES: Record<string, AutoWaypoint[]> = {
     { x: 6, z: 109 }, { x: 6, z: 112.4, y: 4 }, { x: 4.8, z: 115.5, y: 4 }, { x: 6, z: 119.5, y: 4, needGround: true, radius: 1.3 },
     { x: 6, z: 123, y: 4 }, { x: 5, z: 126.5, y: 4.6 }, { x: 7, z: 129.5, y: 4 }, { x: 5.4, z: 132.4, y: 4 }, { x: 0, z: 136, y: 4 },
     { x: -4, z: 137, y: 4, cp: true }, { x: 0, z: 139, y: 4 }, { x: 0, z: 157, y: 0 }, { x: -3, z: 158.5, cp: true },
-    { x: 0, z: 172.4, bounceTo: 7.6, bounces: 3 }, { x: 0, z: 178, y: 7 }, { x: 0, z: 182, y: 7 },
+    { x: 0, z: 172.4, bounceTo: 8.4, bounces: 3 }, { x: 0, z: 178, y: 7 }, { x: 0, z: 182, y: 7 },
   ],
   w1_l05: [
     { x: 0, z: 6, cp: true }, { x: 1.5, z: 11.5, y: 3, needGround: true }, { x: 1.5, z: 16, y: 3, needGround: true },

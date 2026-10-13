@@ -18,6 +18,21 @@ export type ChestState = 'locked' | 'ready' | 'opened';
 export class ProgressionManager {
   /** Ferramenta de desenvolvimento: libera todas as fases sem alterar o save. */
   static devUnlockAll = false;
+  /**
+   * De onde vêm as estrelas que abrem os baús. Agora as estrelas da campanha são as das
+   * CINCO AVENTURAS (ligado em GameServices); sem isso os baús ficariam inalcançáveis,
+   * porque as fases antigas já não recebem estrelas.
+   */
+  private campaignStars: (() => number) | null = null;
+
+  useCampaignStars(fn: () => number): void {
+    this.campaignStars = fn;
+  }
+
+  /** Estrelas que valem para baús e metas (as das aventuras, quando ligadas). */
+  starsForGoals(): number {
+    return this.campaignStars ? this.campaignStars() : this.totalStars();
+  }
 
   constructor(
     private profiles: ProfileManager,
@@ -121,7 +136,8 @@ export class ProgressionManager {
     const p = this.profiles.active;
     if (!p) return 'locked';
     if (p.chestsOpened.includes(chest.id)) return 'opened';
-    return this.worldStars(worldId) >= chest.stars ? 'ready' : 'locked';
+    void worldId;
+    return this.starsForGoals() >= chest.stars ? 'ready' : 'locked';
   }
 
   readyChests(): string[] {

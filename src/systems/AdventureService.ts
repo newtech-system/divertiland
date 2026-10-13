@@ -55,7 +55,7 @@ export interface AdventureOutcome {
 }
 
 export type RunApplied =
-  | { kind: 'nextRun'; nextIndex: number; stages: StageSummary[]; nextStageMission: string }
+  | { kind: 'nextRun'; nextIndex: number; stages: StageSummary[]; nextStageMission: string; divertis: number }
   | { kind: 'done'; outcome: AdventureOutcome }
   | { kind: 'incomplete'; stages: StageSummary[] };
 
@@ -128,7 +128,15 @@ export class AdventureService {
     const ap = this.progress(id, profile);
     if (ap.completed) return 'COMPLETED';
     if (!this.isUnlocked(adv, profile)) return 'LOCKED';
-    if (ap.stagesDone.length > 0 || profile.inProgress?.levelId === adv.runs[ap.runIndex]?.levelId) return 'IN_PROGRESS';
+    // Já descobriu algo (etapa, dourado ou segredo) ou deixou uma partida salva:
+    // o mapa mostra "em andamento" em vez de fingir que ela nunca começou.
+    if (
+      ap.stagesDone.length > 0 ||
+      ap.goldens.length > 0 ||
+      ap.secretsFound.length > 0 ||
+      profile.inProgress?.levelId === adv.runs[ap.runIndex]?.levelId
+    )
+      return 'IN_PROGRESS';
     return 'AVAILABLE';
   }
 
@@ -216,6 +224,11 @@ export class AdventureService {
 
     const isLastRun = runIndex >= adv.runs.length - 1;
     if (!isLastRun) {
+      // Os Divertis desta etapa são creditados AGORA: a criança viu cada moeda subir no
+      // contador, e uma aventura de várias etapas não pode perder o que ela juntou na
+      // primeira (os bônus finitos continuam só no fim, pelo livro-caixa).
+      if (r.divertisCollected > 0) this.currency.earn(r.divertisCollected, `aventura:${adv.id}:etapa${runIndex + 1}`);
+      for (const [k, v] of Object.entries(r.stats)) if (v) this.profiles.addStat(k, v);
       void this.save.flush();
       const next = this.nextStage(adventureId);
       return {
@@ -223,6 +236,7 @@ export class AdventureService {
         nextIndex: runIndex + 1,
         stages: this.stageSummaries(adv, run.stages),
         nextStageMission: next?.mission ?? 'Continuar a aventura',
+        divertis: r.divertisCollected,
       };
     }
 

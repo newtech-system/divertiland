@@ -55,6 +55,11 @@ export interface LevelData {
   contentId: string;
   /** false = aparece no mapa como "Em construção". */
   implemented: boolean;
+  /**
+   * ESPAÇO LIVRE (Meu Mundo): não tem conclusão, não dá recompensa e não grava partida
+   * em andamento. Entrar e sair daqui nunca mexe no progresso de uma aventura.
+   */
+  sandbox?: boolean;
   /** Posição no mapa (0–100 % horizontal, em "passos" verticais). */
   map: { x: number; y: number; style: MapNodeStyle };
 }

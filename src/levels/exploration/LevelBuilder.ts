@@ -50,6 +50,8 @@ export interface CheckpointInfo {
   order: number;
   flag: THREE.Mesh;
   active: boolean;
+  /** Só é destino da ajuda depois que esta flag de missão estiver ligada. */
+  needsFlag?: string;
 }
 
 export interface Interactable {
@@ -490,7 +492,7 @@ export class LevelBuilder {
         break;
       }
       case 'checkpoint':
-        this.checkpoint(e.id, v(e.pos), e.yaw ?? 0);
+        this.checkpoint(e.id, v(e.pos), e.yaw ?? 0, e.needsFlag);
         break;
       case 'pendulum':
         this.pendulum(e);
@@ -1035,7 +1037,7 @@ export class LevelBuilder {
     this.out.fadeables.push({ object: obj, center, radius, materials, baseOpacity, faded: 0 });
   }
 
-  private checkpoint(id: string, p: V3, yaw: number) {
+  private checkpoint(id: string, p: V3, yaw: number, needsFlag?: string) {
     const o = this.out;
     const g = new THREE.Group();
     g.position.set(p.x, p.y, p.z);
@@ -1057,7 +1059,7 @@ export class LevelBuilder {
       flag.rotation.y = Math.sin(t * 3 + p.x) * 0.25;
       star.rotation.y = t * 2;
     });
-    o.checkpoints.push({ id, pos: p, yaw, order: o.checkpoints.length, flag, active: false });
+    o.checkpoints.push({ id, pos: p, yaw, order: o.checkpoints.length, flag, active: false, needsFlag });
     this.trigger('checkpoint', { x: p.x - 3, y: p.y - 0.5, z: p.z - 3 }, { x: p.x + 3, y: p.y + 3, z: p.z + 3 }, { id });
   }
 

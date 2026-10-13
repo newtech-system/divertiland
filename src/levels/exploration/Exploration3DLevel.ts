@@ -133,6 +133,10 @@ export class Exploration3DLevel implements LevelRuntime {
       this.secretsFound = [...r.secretsFound];
       this.elapsed = r.elapsedSec;
       if (r.checkpointId) this.checkpoints.activate(r.checkpointId);
+      // Etapas e missões: sem isto, continuar uma aventura podia deixar a criança atrás
+      // de um portão que ela já havia aberto (ou refazendo a história inteira).
+      this.stagesDone = [...(r.stagesDone ?? [])];
+      this.quests.restore(r.questFlags ?? [], r.questFriends ?? []);
       log.info(`Continuando do checkpoint ${r.checkpointId ?? 'início'}`);
     }
     const sp = this.checkpoints.respawnPoint();
@@ -491,7 +495,9 @@ export class Exploration3DLevel implements LevelRuntime {
     if (this.assistFalls < limit || this.t - this.assistAskedAt < 25) return;
     this.assistAskedAt = this.t;
     this.assistFalls = 0;
-    const next = this.checkpoints.nextSafeCheckpoint();
+    // A ajuda NUNCA leva a criança para depois de um portão de missão que ainda está
+    // fechado: isso pularia uma etapa da história (ou a deixaria presa do outro lado).
+    const next = this.checkpoints.nextSafeCheckpoint((cp) => !cp.needsFlag || !!this.quests?.flags.has(cp.needsFlag));
     if (!next) return;
     const yes = await this.host.hud.offer(
       this.guide,
@@ -565,6 +571,13 @@ export class Exploration3DLevel implements LevelRuntime {
     }
     if (d < (wp.radius ?? 0.8) && (wp.y === undefined || (b.grounded && Math.abs(p.y - wp.y) < 1.5))) {
       this.autoLog.push(`wp ${this.autoIndex} ok`);
+      if (wp.talk) {
+        // MESMO caminho do botão ✋ / tecla E: exige estar perto de verdade. Se o piloto
+        // não estiver ao alcance, nada acontece e a rota empaca — é isso que faz do teste
+        // uma prova de que a missão dá para ser cumprida jogando.
+        this.updateInteract(true);
+        this.autoLog.push(`talk ${JSON.stringify(this.quests.debugState().friends)}`);
+      }
       if (wp.devFlag) this.quests.devSetFlag(wp.devFlag);
       this.autoIndex++;
       this.autoWait = wp.wait ?? 0;
@@ -855,6 +868,9 @@ export class Exploration3DLevel implements LevelRuntime {
       collectiblesFound: [...this.collect.collectiblesFound],
       elapsedSec: this.elapsed,
       savedAt: Date.now(),
+      stagesDone: [...this.stagesDone],
+      questFlags: this.quests?.saveState().flags ?? [],
+      questFriends: this.quests?.saveState().friends ?? [],
     };
   }
 
@@ -1033,6 +1049,8 @@ export interface AutoWaypoint {
   jump?: boolean;
   sprint?: boolean;
   wait?: number;
+  /** Conversa/aperta o que estiver ao alcance (como a criança aperta ✋). */
+  talk?: boolean;
   /** Ficar pulando no trampolim até passar desta altura. */
   bounceTo?: number;
   /** Mínimo de quiques antes de sair do trampolim. */

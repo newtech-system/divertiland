@@ -94,6 +94,8 @@ export function installDevTools(game: GameManager) {
     const { auditLayout, findTraps } = await import('../levels/exploration/layoutAudit');
     const { measureAllStyles } = await import('../engine/physics/reachProbe');
     const mods: Record<string, () => Promise<any>> = {
+      a01: () => import('../data/levels/a01').then((m) => m.LEVEL_A01),
+      meu_mundo: () => import('../data/levels/meu_mundo').then((m) => m.LEVEL_MEU_MUNDO),
       w1_l01: () => import('../data/levels/w1_l01').then((m) => m.LEVEL_W1_L01),
       w1_l05: () => import('../data/levels/w1_l05').then((m) => m.LEVEL_W1_L05),
       w1_l06: () => import('../data/levels/w1_l06').then((m) => m.LEVEL_W1_L06),

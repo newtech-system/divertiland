@@ -16,7 +16,9 @@ import type { ProfileData, SettingsData } from '../systems/save/SaveTypes';
 import { LocalStorageAdapter } from '../systems/save/StorageAdapter';
 import { HudScreen } from '../ui/screens/HudScreen';
 import { LoadingScreen } from '../ui/screens/LoadingScreen';
-import { MapScreen, type MapEnterOptions } from '../ui/screens/MapScreen';
+import { AdventureMapScreen, type MapEnterOptions } from '../ui/screens/AdventureMapScreen';
+import { AdventureResultsScreen, StageDoneScreen } from '../ui/screens/AdventureResultsScreen';
+import { getAdventure } from '../data/adventures';
 import { ProfileCreateScreen } from '../ui/screens/ProfileCreateScreen';
 import { ProfileSelectScreen } from '../ui/screens/ProfileSelectScreen';
 import { ResultsScreen } from '../ui/screens/ResultsScreen';
@@ -54,6 +56,12 @@ export class GameManager {
   private paused = false;
   /** Identifica a partida atual (eventos de partidas antigas são ignorados). */
   private runId = 0;
+  /**
+   * Aventura em curso: qual aventura e qual jogada (etapa) está rodando. É isto que faz
+   * o resultado ir para o AdventureService em vez do caminho antigo de fase solta —
+   * NUNCA os dois, senão cada recompensa seria paga duas vezes.
+   */
+  private adventureRun: { id: string; runIndex: number } | null = null;
   private pauseClose: (() => void) | null = null;
 
   constructor(container: HTMLElement) {
@@ -195,9 +203,10 @@ export class GameManager {
 
   goMap(opts: MapEnterOptions = {}): void {
     this.disposeLevel();
+    this.adventureRun = null;
     this.state = 'map';
     this.audio.playMusic('map');
-    this.ui.show(new MapScreen(this, opts));
+    this.ui.show(new AdventureMapScreen(this, opts));
   }
 
   openShop(): void {
@@ -217,17 +226,56 @@ export class GameManager {
     return !!lvl && lvl.implemented && hasContent(lvl.contentId);
   }
 
-  async startLevel(levelId: string, difficulty: DifficultyId, resume: boolean): Promise<void> {
+  /**
+   * Começa (ou retoma) a aventura: escolhe a jogada certa — a que tem etapas pendentes —
+   * e deixa o resultado marcado para ir pelo caminho das aventuras.
+   */
+  startAdventure(adventureId: string, difficulty: DifficultyId, resume: boolean): void {
+    const adv = getAdventure(adventureId);
+    if (!adv) return;
+    const runIndex = this.services.adventures.runIndexToPlay(adventureId);
+    const run = adv.runs[runIndex];
+    if (!run) return;
+    void this.startLevel(run.levelId, difficulty, resume, { id: adventureId, runIndex });
+  }
+
+  /** Botão "Continuar a aventura" da tela de etapa concluída. */
+  continueAdventure(): void {
+    const next = this.nextRun;
+    this.nextRun = null;
+    if (!next) {
+      this.goMap();
+      return;
+    }
+    this.startAdventure(next.id, next.difficulty, false);
+  }
+
+  /** Entra no terreno do Meu Mundo (espaço livre: sem estrela e sem recompensa). */
+  openMeuMundo(): void {
+    const p = this.profile;
+    if (!p) return;
+    void this.startLevel('meu_mundo', p.preferredDifficulty, false);
+  }
+
+  private nextRun: { id: string; difficulty: DifficultyId } | null = null;
+
+  async startLevel(
+    levelId: string,
+    difficulty: DifficultyId,
+    resume: boolean,
+    adventure: { id: string; runIndex: number } | null = null,
+  ): Promise<void> {
     const level = getLevel(levelId);
     const profile = this.profile;
     if (!level || !profile || !this.canPlay(levelId)) return;
     this.disposeLevel();
+    this.adventureRun = adventure;
     this.state = 'loading';
     this.ui.show(new LoadingScreen(this, level.name, level.icon));
     const services = this.services;
-    services.profiles.setPreferredDifficulty(difficulty);
-    if (!resume) services.progression.clearInProgress(levelId);
-    services.progression.startRun(levelId, difficulty);
+    if (!level.sandbox) services.profiles.setPreferredDifficulty(difficulty);
+    if (!resume && !level.sandbox) services.progression.clearInProgress(levelId);
+    if (!level.sandbox) services.progression.startRun(levelId, difficulty);
 
     const runId = ++this.runId;
     const hud = new HudScreen(this, level);
@@ -238,7 +286,9 @@ export class GameManager {
       params,
       character: profile.character,
       look: services.customization.resolveLook(profile.character),
-      firstTime: !services.progression.progress(levelId).completed,
+      firstTime: adventure
+        ? !services.adventures.progress(adventure.id).completed
+        : !services.progression.progress(levelId).completed,
       settings: this.settings,
       resume: resume ? profile.inProgress : null,
       renderer: this.renderer,
@@ -249,7 +299,8 @@ export class GameManager {
       addStat: (k, n) => services.profiles.addStat(k, n),
       // Só aceita eventos da partida ATUAL (uma partida antiga já descartada é ignorada).
       finish: (r) => runId === this.runId && this.onLevelFinished(r),
-      checkpoint: (run) => runId === this.runId && services.progression.saveInProgress(run),
+      // Espaço livre nunca ocupa a vaga de "partida em andamento" de uma aventura.
+      checkpoint: (run) => runId === this.runId && !level.sandbox && services.progression.saveInProgress(run),
     });
     if (!runtime) {
       this.goMap();
@@ -278,6 +329,16 @@ export class GameManager {
 
   private onLevelFinished(result: LevelRunResult) {
     if (this.state !== 'level') return;
+    const level = this.levelId ? getLevel(this.levelId) : null;
+    // Espaço livre (Meu Mundo): "chegar no portal" só significa voltar ao mapa.
+    if (level?.sandbox) {
+      this.goMap();
+      return;
+    }
+    if (this.adventureRun) {
+      this.finishAdventureRun(result);
+      return;
+    }
     let outcome: LevelOutcome;
     try {
       outcome = this.services.completion.apply(result);
@@ -290,6 +351,33 @@ export class GameManager {
     this.input.enabled = false;
     this.hud = null;
     this.ui.show(new ResultsScreen(this, result, outcome));
+  }
+
+  /** Resultado de uma jogada de aventura: etapa concluída ou aventura terminada. */
+  private finishAdventureRun(result: LevelRunResult) {
+    const run = this.adventureRun!;
+    let applied;
+    try {
+      applied = this.services.adventures.applyRun(run.id, run.runIndex, result);
+    } catch (e) {
+      log.error('Falha ao aplicar resultado da aventura', e);
+      this.goMap();
+      return;
+    }
+    this.state = 'results';
+    this.input.enabled = false;
+    this.hud = null;
+    if (applied.kind === 'done') {
+      this.adventureRun = null;
+      this.ui.show(new AdventureResultsScreen(this, result, applied.outcome));
+      return;
+    }
+    if (applied.kind === 'nextRun') {
+      this.nextRun = { id: run.id, difficulty: result.difficulty };
+      this.ui.show(new StageDoneScreen(this, run.id, applied, result));
+      return;
+    }
+    this.goMap();
   }
 
   openPause(): void {
@@ -318,7 +406,8 @@ export class GameManager {
 
   /** Sair no meio: guarda o progresso parcial (estado IN_PROGRESS) e volta ao mapa. */
   quitLevel(): void {
-    const snap = this.level?.snapshot();
+    const level = this.levelId ? getLevel(this.levelId) : null;
+    const snap = level?.sandbox ? null : this.level?.snapshot();
     if (snap) this.services.progression.saveInProgress(snap);
     void this.services.save.flush();
     this.paused = false;
@@ -327,6 +416,10 @@ export class GameManager {
   }
 
   replayLevel(): void {
+    if (this.adventureRun) {
+      this.startAdventure(this.adventureRun.id, this.levelDifficulty, false);
+      return;
+    }
     if (this.levelId) void this.startLevel(this.levelId, this.levelDifficulty, false);
   }
 

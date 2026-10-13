@@ -106,11 +106,11 @@ export const ADVENTURES: AdventureDef[] = [
     guide: 'jhow',
     unlock: {},
     stages: [
-      st('a01_e1', 'Chegar e aprender', 'Vá até o Jhow e diga oi', 'Você aprende a andar, pegar e pular num lugar seguro.'),
+      st('a01_e1', 'Chegar e aprender', 'Aprenda a andar, pegar Divertis e pular', 'Você atravessa o túnel sabendo usar os controles.'),
       st('a01_e2', 'Perceber e acolher', 'Converse com a criança triste', 'Ela conta o que aconteceu e mostra como é o ursinho.'),
       st('a01_e3', 'Encontrar pistas', 'Siga as pistas do ursinho', 'As pistas mostram por onde o ursinho passou.'),
-      st('a01_e4', 'Preparar um caminho', 'Abra o caminho para a área tranquila', 'Um apoio se encaixa e a passagem abre.'),
-      st('a01_e5', 'Encontrar e devolver', 'Leve o ursinho de volta', 'A criança reencontra o ursinho dela.'),
+      st('a01_e4', 'Preparar um caminho', 'Leve as 2 peças de apoio para o Robô Beto', 'O apoio se encaixa e a passagem do recanto abre.'),
+      st('a01_e5', 'Encontrar e devolver', 'Ache o ursinho de laço rosa e leve para a Bia', 'A Bia reencontra o ursinho dela e para de chorar.'),
       st('a01_e6', 'Celebrar a ação', 'Veja o que o seu cuidado fez', 'A saída da missão abre e todos comemoram.'),
     ],
     runs: [{ levelId: 'a01', stages: ['a01_e1', 'a01_e2', 'a01_e3', 'a01_e4', 'a01_e5', 'a01_e6'] }],
@@ -119,9 +119,9 @@ export const ADVENTURES: AdventureDef[] = [
       { id: 'a01_segredo', type: 'secret', secretId: 'a01_sala_secreta', icon: '🔍', label: 'Descubra a sala secreta' },
     ],
     goldens: [
-      { id: 'a01_urso_1', hint: 'Quem olha para cima encontra.', from: 'a01_urso_1' },
-      { id: 'a01_urso_2', hint: 'Fica num desvio do caminho principal.', from: 'a01_urso_2' },
-      { id: 'a01_urso_3', hint: 'Só aparece para quem segue as três pistas.', from: 'a01_urso_3' },
+      { id: 'a01_urso_1', hint: 'Atrás do pilar da entrada, para quem olha em volta.', from: 'a01_urso_1' },
+      { id: 'a01_urso_2', hint: 'No alto da pilha de almofadas dos blocos malucos.', from: 'a01_urso_2' },
+      { id: 'a01_urso_3', hint: 'No recanto tranquilo: só chega quem segue as pistas e abre a passagem.', from: 'a01_urso_3' },
     ],
     learning: {
       skill: ['observation', 'empathy', 'spatial_awareness'],

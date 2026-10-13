@@ -38,17 +38,23 @@ Ferramentas novas: área de teste de movimento, validador de percurso (itens for
 alcance, plataformas isoladas, buracos sem saída), verificador de obstrução de câmera e
 de texto cortado.
 
-### 🚧 Marco 2 — Modelo das aventuras e a A01 completa
+### ✅ Marco 2 — A Aventura 1 completa, o mapa das cinco e o Meu Mundo
 **Feito:** modelo de dados das cinco aventuras (etapas internas, 15 estrelas, 15 ursinhos
 de id permanente, aprendizado vivido), dois saldos separados, livro-caixa com chave de
-idempotência, migração do save v1→v2 (dez fases → cinco aventuras, sem pagar de novo nem
-apagar nada), conquistas revisadas com patentes, mecânica de etapas internas e de missão
-em duas partes.
+idempotência, migração do save v1→v2, conquistas revisadas com patentes, mecânica de etapas
+internas e de missão em duas partes.
 
-**Falta:** o conteúdo da A01 (`src/data/levels/a01.ts` com os seis trechos da seção 9: a
-criança triste, as três pistas, o mecanismo do caminho, a devolução do ursinho e a sala
-secreta), o mapa mostrando as cinco aventuras + a entrada do Meu Mundo, o fluxo de
-"etapa concluída → próxima etapa" nas telas, e o terreno mínimo do Meu Mundo.
+E, nesta etapa: **a Aventura 1 inteira** (`src/data/levels/a01.ts` — a criança triste, as
+três pistas, o mecanismo da porta, a escolha do ursinho certo, a devolução e a festa, mais a
+sala secreta e os 3 ursinhos dourados), o **mapa das cinco aventuras** com a entrada do
+**Meu Mundo** e dois desafios bônus, o fluxo "etapa concluída → próxima etapa", a tela de
+resultado da aventura com os saldos separados, e o **terreno mínimo do Meu Mundo**.
+
+Verificado jogando: a A01 termina do início ao fim nos **três estilos**, com 0 quedas, as 6
+etapas, os 3 ursinhos dourados e a sala secreta; continuar uma partida salva não perde
+etapa nem missão. Evidência em `docs/BACKLOG.md` (seção "MARCO 2").
+
+**Falta antes de considerar a experiência aprovada:** teste com criança de 4 e de 10 anos.
 
 ### ⏭️ Marcos 3 a 6
 A02–A05 com conteúdo próprio, Meu Mundo completo com visitas assíncronas, economia e

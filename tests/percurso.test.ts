@@ -12,6 +12,8 @@ import type { DifficultyId } from '../src/core/types';
  */
 
 const LAYOUTS: [string, () => Promise<LevelLayout>][] = [
+  ['a01', () => import('../src/data/levels/a01').then((m) => m.LEVEL_A01)],
+  ['meu_mundo', () => import('../src/data/levels/meu_mundo').then((m) => m.LEVEL_MEU_MUNDO)],
   ['w1_l01', () => import('../src/data/levels/w1_l01').then((m) => m.LEVEL_W1_L01)],
   ['w1_l05', () => import('../src/data/levels/w1_l05').then((m) => m.LEVEL_W1_L05)],
   ['w1_l06', () => import('../src/data/levels/w1_l06').then((m) => m.LEVEL_W1_L06)],

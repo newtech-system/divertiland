@@ -14,6 +14,9 @@ const log = createLogger('LevelRegistry');
  * e uma linha aqui.
  */
 const CONTENT: Record<string, (host: LevelHost) => LevelRuntime> = {
+  // Aventura 1 (conteúdo definitivo) e o terreno do Meu Mundo.
+  a01: (host) => new Exploration3DLevel(host, () => import('../data/levels/a01').then((m) => m.LEVEL_A01)),
+  meu_mundo: (host) => new Exploration3DLevel(host, () => import('../data/levels/meu_mundo').then((m) => m.LEVEL_MEU_MUNDO)),
   w1_l01: (host) => new Exploration3DLevel(host, () => import('../data/levels/w1_l01').then((m) => m.LEVEL_W1_L01)),
   w1_l02: (host) => new HiddenObjectsLevel(host, () => import('../data/levels/w1_l02').then((m) => m.HIDDEN_W1_L02)),
   w1_l03: (host) => new RunnerLevel(host),

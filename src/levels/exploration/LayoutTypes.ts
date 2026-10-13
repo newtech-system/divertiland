@@ -82,6 +82,8 @@ export type LayoutEntity = Base &
         mission2?: string;
         thanks2?: string;
         hint2?: string;
+        /** Etapa concluída já ao OUVIR este amigo pela primeira vez (acolher alguém). */
+        stageMeet?: string;
         /** Etapa concluída quando a primeira missão deste amigo termina. */
         stage?: string;
         /** Etapa concluída quando a segunda missão termina. */
@@ -102,7 +104,12 @@ export type LayoutEntity = Base &
     | { t: 'bumpBlock'; pos: Vec3; color?: string }
     /** Plataforma que treme e some depois de pisar (volta em seguida). */
     | { t: 'vanish'; pos: Vec3; size: [number, number]; color?: string }
-    | { t: 'checkpoint'; id: string; pos: Vec3; yaw?: number }
+    /**
+     * Ponto seguro. `needsFlag` marca um checkpoint que fica DEPOIS de um portão de
+     * missão: a ajuda "Vamos juntos?" nunca leva a criança para lá antes de a missão
+     * estar cumprida (senão ela pularia uma etapa da história ou ficaria presa).
+     */
+    | { t: 'checkpoint'; id: string; pos: Vec3; yaw?: number; needsFlag?: string }
     | { t: 'trampoline'; pos: Vec3; radius: number; power?: number }
     | { t: 'ballpit'; min: Vec3; max: Vec3; depth?: number }
     | { t: 'net'; min: Vec3; max: Vec3; normal: [number, number]; color?: string }

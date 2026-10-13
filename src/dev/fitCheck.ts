@@ -179,6 +179,8 @@ export async function fitGame(game: GameManager) {
   game.updateSettings({ touchControls: 'on' }); // pior caso: joystick + botões na tela
 
   const levels: [string, string][] = [
+    ['a01', 'aventura 1 (HUD + controles)'],
+    ['meu_mundo', 'meu mundo'],
     ['w1_l01', 'fase 3D (HUD + controles)'],
     ['w1_l02', 'objetos escondidos'],
     ['w1_l03', 'corrida'],
@@ -190,7 +192,7 @@ export async function fitGame(game: GameManager) {
     await wait(1400);
     const r = fitCheck();
     if (r.problems.length) report[name] = r.problems;
-    if (id === 'w1_l01') {
+    if (id === 'a01') {
       game.openPause();
       await wait(400);
       const p = fitCheck();
@@ -198,14 +200,14 @@ export async function fitGame(game: GameManager) {
       game.closePause();
     }
   }
-  // Tela de resultados (com a fase concluída de mentirinha).
-  await game.startLevel('w1_l01', 'monkey', false);
+  // Tela de resultado da AVENTURA (com a aventura concluída de mentirinha).
+  game.startAdventure('a01', 'monkey', false);
+  await wait(1800);
   game.closePause();
-  await wait(1200);
   (game.level as any)?.dev?.complete?.(3);
-  await wait(3600);
+  await wait(4200);
   const res = fitCheck();
-  if (res.problems.length) report['resultado'] = res.problems;
+  if (res.problems.length) report['resultado da aventura'] = res.problems;
 
   game.updateSettings({ touchControls: touchBefore });
   game.goMap();
@@ -255,7 +257,12 @@ export async function fitAll(game: GameManager) {
 
   document.querySelector<HTMLElement>('.map-node')?.click();
   await wait(600);
-  snap('cartão da fase');
+  snap('cartão da aventura');
+  game.ui.closeAllModals();
+
+  document.querySelector<HTMLElement>('[aria-label="Meu Mundo Divertiland"]')?.click();
+  await wait(600);
+  snap('cartão do Meu Mundo');
   game.ui.closeAllModals();
 
   game.openShop();
@@ -288,7 +295,10 @@ export async function fitAll(game: GameManager) {
  * Vai a cada checkpoint da fase, olha para a frente e acusa placa/bandeira/balão que
  * continue opaco atrapalhando a visão.
  */
-export async function viewCheck(game: GameManager, levels = ['w1_l01', 'w1_l05', 'w1_l07', 'w1_l08', 'w1_l10']) {
+export async function viewCheck(
+  game: GameManager,
+  levels = ['a01', 'meu_mundo', 'w1_l01', 'w1_l05', 'w1_l07', 'w1_l08', 'w1_l10'],
+) {
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const report: Record<string, unknown> = {};
   const created = !game.profile;

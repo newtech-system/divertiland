@@ -58,6 +58,8 @@ export class GameServices {
       this.bus,
     );
     this.achievements.useAdventures(this.adventures);
+    // Os baús passam a contar as estrelas das cinco aventuras.
+    this.progression.useCampaignStars(() => this.adventures.totalStars());
     this.completion = new LevelCompletionService(
       this.profiles,
       this.progression,
