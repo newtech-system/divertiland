@@ -282,3 +282,34 @@ export async function fitAll(game: GameManager) {
   await wait(300);
   return { size: `${window.innerWidth}x${window.innerHeight}`, report };
 }
+
+/**
+ * QA DE VISÃO (seção 7.2: "testar todos os checkpoints olhando para o próximo salto").
+ * Vai a cada checkpoint da fase, olha para a frente e acusa placa/bandeira/balão que
+ * continue opaco atrapalhando a visão.
+ */
+export async function viewCheck(game: GameManager, levels = ['w1_l01', 'w1_l05', 'w1_l07', 'w1_l08', 'w1_l10']) {
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const report: Record<string, unknown> = {};
+  const created = !game.profile;
+  if (created) game.services.profiles.create('QA', 'mina', 'monkey');
+  for (const id of levels) {
+    await game.startLevel(id, 'monkey', false);
+    game.closePause();
+    await wait(900);
+    const L = game.level as any;
+    if (!L?.dev?.viewObstructions) continue;
+    for (const cp of L.dev.checkpoints() as string[]) {
+      L.dev.teleportTo(cp);
+      // Alguns quadros para a câmera assentar e o fade reagir.
+      for (let i = 0; i < 40; i++) {
+        L.update(1 / 60);
+      }
+      const bad = L.dev.viewObstructions();
+      if (bad.length) report[`${id}/${cp}`] = bad;
+    }
+  }
+  game.goMap();
+  await wait(200);
+  return report;
+}

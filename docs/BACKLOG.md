@@ -70,9 +70,24 @@ até com a criança andando de lado ou de costas, e aí "para frente" virava "pa
   quando precisa), abaixa sozinha nas barras e pula nos obstáculos baixos.
 - **Fileiras do percurso**: no estilo tranquilo nunca fecham duas faixas na mesma fileira
   (trocar duas faixas de uma vez é esforço motor demais).
-**Evidência:** a fase de corrida **sem nenhum comando** no Bicho-Preguiça: antes ficava
-presa em `z = 578` com 165 batidas e nunca terminava; agora **termina a fase inteira**
-(z 1043/1044) com 3 batidas.
+
+**Evidência 1 — corrida sem nenhum comando (Bicho-Preguiça):** antes ficava presa em
+`z = 578` com 165 batidas e nunca terminava; agora **termina a fase inteira** (z 1043/1044)
+com 3 batidas.
+
+**Evidência 2 — pulo automático nas fases 3D:** no caminho das plataformas da Fase 1,
+segurando **só "para frente", sem apertar pular nenhuma vez**:
+| | até onde foi | altura final | quedas |
+|---|---|---|---|
+| com a ajuda | z 111,6 → **136,9** | 4,0 (em cima das plataformas) | **0** |
+| sem a ajuda | z 111,6 → 127,9 | 0,0 (no fosso) | 1 |
+
+**Evidência 3 — "Vamos juntos?" de ponta a ponta:** forcei 3 quedas no mesmo trecho; o
+guia perguntou com dois botões grandes ("🤝 Vamos juntos!" / "💪 Deixa que eu tento"),
+o desafio ficou parado durante a pergunta, e ao aceitar o jogo escureceu a tela, **ativou o
+checkpoint de verdade** (`cp1`), colocou a criança lá e só **depois de chegar** disse
+"Chegamos! Daqui pra frente é com você". A contagem de quedas zera a cada checkpoint, então
+"3 quedas" significa 3 quedas *naquele trecho*.
 
 ### B22 — Abaixar na corrida não funciona ✅
 **Investigado.** A mecânica existia e funcionava (colisão cai de 1,45 m para 0,72 m) — medido
@@ -107,8 +122,8 @@ catálogo de prêmios presenciais no jogo, então não há risco em produção.
 | B02 Divertis anunciados sem ver moedas | 🚧 Marco 2 | A tela final vai separar "moedas que você pegou" de "bônus da missão", e mostrar o acumulado separado do ganho da partida (seção 16) |
 | B03 Estrelas do caminho não coletadas | ✅ | Estrela de **enfeite** agora é fosca, parada, presa num suporte — não gira, não flutua, não brilha. Só o que é coletável tem brilho e movimento de coleta |
 | B04 Terceiro dourado não localizado | 🧪 🚧 | O validador prova que **todos** os colecionáveis das fases estão ao alcance nos três estilos (`auditLayout`). Ou seja: não é impossibilidade, é falta de pista — as pistas entram no Marco 2 (A01) |
-| B07 Placa "Plataforma" cobre o salto | ✅ | Placas saíram do lote estático e **ficam translúcidas** quando entram entre a câmera e a criança |
-| B08 Bandeira de checkpoint cobre o destino | ✅ | Mesmo sistema: bandeiras e balões também somem de leve quando atrapalham |
+| B07 Placa "Plataforma" cobre o salto | ✅ | Placas saíram do lote estático e **ficam translúcidas** quando atrapalham. O trecho vigiado vai da câmera até **6 m à frente** da criança (a placa que incomoda está adiante, não em cima dela). As duas placas da bifurcação também mudaram de lugar: foram para as paredes laterais, acima da linha do salto |
+| B08 Bandeira de checkpoint cobre o destino | ✅ | Mesmo sistema: bandeiras e balões também ficam translúcidos. **Verificado como a seção 7.2 pede** ("testar todos os checkpoints olhando para o próximo salto"): `__viewCheck()` vai a cada checkpoint de 5 fases, olha para frente e dispara raios — nenhum enfeite opaco atrapalhando. Autoteste do verificador: com o efeito desligado ele acusa 4 obstruções em cada checkpoint; com o efeito ligado, nenhuma |
 | B10 Plataformas móveis/que somem frustram | 🧪 🚧 | O validador garante alcance com margem por estilo; afinação de tempo/aviso entra na reconstrução da A04 |
 | B11 Missão do ursinho não existe | 🚧 Marco 2 | É o coração da A01 |
 | B12 Chegada não deixa claro o que foi cumprido | 🚧 Marco 2 | |
@@ -134,7 +149,7 @@ catálogo de prêmios presenciais no jogo, então não há risco em produção.
 | B33 Presentes e balões parecem coisas para pegar | ✅ | Enfeites que parecem prêmio dão um "boing" ao toque (reagem, mas não premiam) e os coletáveis têm linguagem visual própria |
 | B35 Nove fases repetem mecânicas | 🚧 Marcos 2–3 | Escopo passa a ser 5 aventuras |
 | B36 Pega-pega curto demais | 🚧 Marco 3 | Integrado à gincana da A05 |
-| B37 "Você conquistou" cortado | ✅ | Corrigido na passagem de responsividade (interface que cabe de 280×653 a 1280×800); falta um verificador automático de **texto** cortado |
+| B37 "Você conquistou" cortado | ✅ 🧪 | Corrigido na passagem de responsividade (interface que cabe de 280×653 a 1280×800). Agora existe o verificador de **texto cortado** (`textCheck`), que entrou no conferidor de telas: autoteste com um título encolhido de propósito → acusou "texto cortado na largura (420 > 60)"; nas telas de verdade, `__fitAll()` e `__fitGame()` em 360×640 e 1024×768 (incluindo a tela de resultado) → **nenhum texto cortado** |
 | B38 Theo acha simples, iniciante sofre | ✅ base | Assistência de controle e complexidade de missão agora são coisas separadas (seção 6); o conteúdo que explora isso vem nas aventuras |
 
 ---
@@ -156,4 +171,5 @@ catálogo de prêmios presenciais no jogo, então não há risco em produção.
 | `src/levels/exploration/layoutAudit.ts` | Valida **percurso**: item fora de alcance, plataforma isolada e **buraco sem saída** | `__audit()` no navegador |
 | `tests/percurso.test.ts` | Roda tudo acima em todas as fases, nos três estilos | `npm test` |
 | `__qaAll()` | Piloto automático joga as fases 3D inteiras | no console do `npm run dev` |
-| `__fitAll()` / `__fitGame()` | Confere se tudo cabe na tela | no console do `npm run dev` |
+| `__fitAll()` / `__fitGame()` | Confere se tudo cabe na tela, inclusive **texto cortado** | no console do `npm run dev` |
+| `__viewCheck()` | Vai a cada checkpoint e acusa enfeite opaco tapando a visão (seção 7.2) | no console do `npm run dev` |

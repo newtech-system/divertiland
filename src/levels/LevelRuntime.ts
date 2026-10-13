@@ -75,6 +75,8 @@ export interface LevelRuntime {
     toggleColliders(): void;
     complete(stars: 1 | 2 | 3): void;
     collectAll(): void;
+    /** Enfeites que continuam opacos tapando a visão (seção 7.2). */
+    viewObstructions?(): { label: string; dist: number; opacity: number }[];
   };
 }
 

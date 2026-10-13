@@ -48,11 +48,9 @@ export class CheckpointManager {
    * Próximo ponto seguro depois do atual — para onde a ajuda "Vamos juntos?" conduz
    * a criança (seção 6). Se já está no último, devolve null.
    */
-  nextSafePoint(): V3 | null {
+  nextSafeCheckpoint(): CheckpointInfo | null {
     const order = this.current?.order ?? -1;
-    const next = this.list.filter((c) => c.order > order).sort((a, b) => a.order - b.order)[0];
-    if (!next) return null;
-    return { x: next.pos.x, y: next.pos.y + 0.1, z: next.pos.z };
+    return this.list.filter((c) => c.order > order).sort((a, b) => a.order - b.order)[0] ?? null;
   }
 
   ids(): string[] {

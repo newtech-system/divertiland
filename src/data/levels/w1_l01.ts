@@ -216,8 +216,10 @@ msg('m_pit', [-9, 0, 90], [9, 1.5, 102], 'Piscina de bolinhas! Suba pela rede am
 // ============================================================ G — ESCOLHA DE CAMINHO
 add(
   { t: 'checkpoint', id: 'cp3', pos: [0, 4, 106] },
-  { t: 'sign', pos: [5.5, 6, 109.7], yaw: Math.PI, text: '⬅️ Plataformas', color: PALETTE.orange, w: 3, h: 1 },
-  { t: 'sign', pos: [-6.5, 6, 109.7], yaw: Math.PI, text: 'Tranquilo ➡️', color: PALETTE.green, w: 3, h: 1 },
+  // B07: as placas saíram de cima do caminho. Ficam nas paredes laterais, viradas para
+  // quem chega, e acima da linha de visão do próximo salto (seção 7.2).
+  { t: 'sign', pos: [8.7, 7.6, 112], yaw: -Math.PI / 2, text: '⬅️ Plataformas', color: PALETTE.orange, w: 3, h: 1 },
+  { t: 'sign', pos: [-8.7, 7.6, 112], yaw: Math.PI / 2, text: 'Tranquilo ➡️', color: PALETTE.green, w: 3, h: 1 },
   // Divisória entre os caminhos
   { t: 'box', min: [-4, 0, 110], max: [2.6, 7.5, 134], color: PALETTE.purpleLight },
   { t: 'decor', kind: 'neonSign', pos: [-0.7, 9, 110.1], yaw: Math.PI, text: 'ESCOLHA!', color: PALETTE.yellow, size: 0.8 },

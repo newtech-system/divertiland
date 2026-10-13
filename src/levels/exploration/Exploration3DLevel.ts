@@ -315,7 +315,10 @@ export class Exploration3DLevel implements LevelRuntime {
     const list = this.lvl.fadeables;
     if (!list.length) return;
     const cam = this.camera.position;
-    this.fadeA.set(pos.x, pos.y + 1.1, pos.z);
+    // O segmento vai da câmera até 6 m ADIANTE da criança: a placa que atrapalha está
+    // na frente dela (era o caso do "⬅️ Plataformas" cobrindo o salto), não em cima dela.
+    this.camera.getWorldDirection(this.fadeDir);
+    this.fadeA.set(pos.x, pos.y + 1.1, pos.z).addScaledVector(this.fadeDir, 6);
     for (const f of list) {
       f.object.getWorldPosition(this.fadeB);
       // Distância do objeto ao segmento câmera → personagem.
@@ -355,6 +358,7 @@ export class Exploration3DLevel implements LevelRuntime {
   private fadeB = new THREE.Vector3();
   private fadeC = new THREE.Vector3();
   private fadeSeg = new THREE.Vector3();
+  private fadeDir = new THREE.Vector3();
 
   /** Encostou na lava (em cima, de lado ou dentro)? Vale para qualquer face. */
   private touchingLava(): boolean {
@@ -362,7 +366,9 @@ export class Exploration3DLevel implements LevelRuntime {
     if (body.grounded && body.ground?.surface === 'lava') return true;
     const r = body.radius;
     const p = body.pos;
-    const min = { x: p.x - r, y: p.y, z: p.z - r };
+    // Começa um pouco acima dos pés: plataforma encostada na lava não pode matar
+    // quem está em pé na beirada dela (o contato por cima já é tratado acima).
+    const min = { x: p.x - r, y: p.y + 0.05, z: p.z - r };
     const max = { x: p.x + r, y: p.y + body.height * 0.6, z: p.z + r };
     for (const c of this.lvl.world.overlapping(min, max, this.lavaProbe)) if (c.surface === 'lava') return true;
     return false;
@@ -384,8 +390,6 @@ export class Exploration3DLevel implements LevelRuntime {
   private assistFalls = 0;
   private assistAskedAt = -99;
   private assistLedTo: string | null = null;
-  private guiding = 0;
-  private guideTarget: V3 | null = null;
   private stuckAt: V3 | null = null;
   private stuckT = 0;
   private autoJumpCooldown = 0;
@@ -403,28 +407,6 @@ export class Exploration3DLevel implements LevelRuntime {
     const b = this.controller.body;
     const sloth = this.host.params.hintLevel >= 2;
     this.autoJumpCooldown = Math.max(0, this.autoJumpCooldown - dt);
-
-    // --- Conduzindo até o ponto seguro ("Vamos juntos?")
-    if (this.guiding > 0 && this.guideTarget) {
-      this.guiding -= dt;
-      const dx = this.guideTarget.x - b.pos.x;
-      const dz = this.guideTarget.z - b.pos.z;
-      const d = Math.hypot(dx, dz);
-      if (d < 1.2 || this.guiding <= 0) {
-        this.guiding = 0;
-        this.guideTarget = null;
-        this.controller.frozen = false;
-        this.host.hud.say(this.guide, 'Chegamos! Agora é com você. Eu fico aqui torcendo!', '🤝');
-      } else {
-        intent.x = dx / d;
-        intent.z = dz / d;
-        intent.sprint = false;
-        // Pula sozinho no caminho quando precisa.
-        if (b.grounded && (this.noGroundAhead(intent, 0.9) || b.hitWall)) intent.jumpPressed = true;
-        intent.jumpHeld = true;
-      }
-      return;
-    }
 
     // --- Pulo automático contextual (só no estilo tranquilo)
     if (sloth && b.grounded && !this.side && this.autoJumpCooldown === 0) {
@@ -479,7 +461,11 @@ export class Exploration3DLevel implements LevelRuntime {
     return false;
   }
 
-  /** Depois de cair várias vezes no mesmo trecho, oferece ajuda de verdade. */
+  /**
+   * Depois de cair várias vezes NO MESMO TRECHO, oferece ajuda de verdade (seção 6).
+   * Aceitando, o guia leva a criança de mão até o próximo ponto seguro: escurece a tela,
+   * coloca ela lá e só então diz "Chegamos" — nunca anuncia uma chegada que não houve.
+   */
   private async maybeOfferHelp() {
     if (this.autoRoute) return; // piloto automático de teste não responde perguntas
     const sloth = this.host.params.hintLevel >= 2;
@@ -489,7 +475,7 @@ export class Exploration3DLevel implements LevelRuntime {
     if (this.assistFalls < limit || this.t - this.assistAskedAt < 25) return;
     this.assistAskedAt = this.t;
     this.assistFalls = 0;
-    const next = this.checkpoints.nextSafePoint();
+    const next = this.checkpoints.nextSafeCheckpoint();
     if (!next) return;
     const yes = await this.host.hud.offer(
       this.guide,
@@ -497,11 +483,28 @@ export class Exploration3DLevel implements LevelRuntime {
       { icon: '🤝', label: 'Vamos juntos!' },
       { icon: '💪', label: 'Deixa que eu tento' },
     );
-    if (!yes) return;
+    if (!yes) {
+      this.host.hud.say(this.guide, 'Tá bom! Eu fico aqui torcendo por você!', '💪');
+      return;
+    }
     this.assistLedTo = cpId;
-    this.guideTarget = next;
-    this.guiding = 14;
-    this.host.hud.say(this.guide, 'Segura na minha mão! A gente vai devagar.', '🤝');
+    const h = this.host;
+    h.hud.say(this.guide, 'Segura na minha mão! A gente vai juntos.', '🤝');
+    await new Promise((r) => setTimeout(r, 900));
+    await h.hud.fade(true);
+    // Ativa o checkpoint de destino (o progresso é de verdade) e coloca a criança lá.
+    if (this.checkpoints.activate(next.id)) {
+      const snap = this.snapshot();
+      if (snap) h.checkpoint(snap);
+    }
+    const sp = this.checkpoints.respawnPoint();
+    this.controller.teleport(sp.pos, sp.yaw);
+    this.cam.snapBehind(sp.yaw);
+    this.stuckAt = null;
+    this.stuckT = 0;
+    await h.hud.fade(false);
+    h.audio.play('checkpoint');
+    h.hud.say(this.guide, 'Chegamos! Daqui pra frente é com você. Eu fico torcendo!', '🤝');
   }
 
   // ------------------------------------------------------------------ piloto automático (testes de QA)
@@ -663,6 +666,7 @@ export class Exploration3DLevel implements LevelRuntime {
       }
       case 'checkpoint': {
         if (this.checkpoints.activate(tr.data.id)) {
+          this.assistFalls = 0; // "3 quedas" conta por trecho, não pela fase inteira
           h.audio.play('checkpoint');
           h.hud.toast('🚩', 'Ponto de partida salvo!');
           const cp = this.checkpoints.get(tr.data.id)!;
@@ -913,6 +917,33 @@ export class Exploration3DLevel implements LevelRuntime {
       if (!cp) return;
       this.controller.teleport({ x: cp.pos.x, y: cp.pos.y + 0.5, z: cp.pos.z + 1 }, cp.yaw);
       this.cam.snapBehind(cp.yaw);
+    },
+    /**
+     * QA da seção 7.2: olhando de onde a criança está, algum enfeite/placa/bandeira
+     * continua OPACO entre a câmera e o que ela precisa ver? Devolve os culpados.
+     */
+    viewObstructions: () => {
+      const ray = new THREE.Raycaster();
+      const p = this.controller.position;
+      const chest = new THREE.Vector3(p.x, p.y + 1.1, p.z);
+      const dir = new THREE.Vector3();
+      this.camera.getWorldDirection(dir);
+      const objs = this.lvl.fadeables.map((f) => f.object);
+      const bad: { label: string; dist: number; opacity: number }[] = [];
+      for (const ahead of [0, 2, 4, 6]) {
+        const target = chest.clone().addScaledVector(dir, ahead);
+        const from = this.camera.position;
+        const d = target.clone().sub(from);
+        const len = d.length();
+        ray.set(from, d.normalize());
+        ray.far = len;
+        for (const hit of ray.intersectObjects(objs, true)) {
+          const f = this.lvl.fadeables.find((x) => hit.object === x.object || x.object.children.includes(hit.object as never));
+          const op = f ? 1 - f.faded * 0.82 : 1;
+          if (op > 0.5) bad.push({ label: hit.object.name || hit.object.type, dist: +hit.distance.toFixed(2), opacity: +op.toFixed(2) });
+        }
+      }
+      return bad;
     },
     toggleColliders: () => {
       if (!this.colliderDebug) {
