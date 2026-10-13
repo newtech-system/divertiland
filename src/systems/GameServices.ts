@@ -1,5 +1,6 @@
 import { EventBus } from '../core/EventBus';
 import { AchievementSystem } from './AchievementSystem';
+import { AdventureService } from './AdventureService';
 import { CurrencyManager } from './CurrencyManager';
 import { CustomizationManager } from './CustomizationManager';
 import { InventoryManager } from './InventoryManager';
@@ -8,6 +9,7 @@ import { ProfileManager } from './ProfileManager';
 import { ProgressionManager } from './ProgressionManager';
 import { SaveManager } from './save/SaveManager';
 import type { StorageAdapter } from './save/StorageAdapter';
+import { RewardLedger } from './RewardLedger';
 import { ShopManager } from './ShopManager';
 
 /**
@@ -26,6 +28,8 @@ export class GameServices {
   readonly progression: ProgressionManager;
   readonly achievements: AchievementSystem;
   readonly completion: LevelCompletionService;
+  readonly ledger: RewardLedger;
+  readonly adventures: AdventureService;
 
   constructor(storage: StorageAdapter, saveDebounceMs = 400) {
     this.save = new SaveManager(storage, this.bus, saveDebounceMs);
@@ -43,6 +47,17 @@ export class GameServices {
       this.save,
       this.bus,
     );
+    this.ledger = new RewardLedger(this.profiles, this.save, this.bus);
+    this.adventures = new AdventureService(
+      this.profiles,
+      this.progression,
+      this.currency,
+      this.achievements,
+      this.ledger,
+      this.save,
+      this.bus,
+    );
+    this.achievements.useAdventures(this.adventures);
     this.completion = new LevelCompletionService(
       this.profiles,
       this.progression,

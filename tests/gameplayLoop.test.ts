@@ -84,8 +84,9 @@ describe('Ciclo da fase (conclusão → recompensa → desbloqueio)', () => {
     expect(out.unlockedLevels).toContain('w1_l02');
     expect(s.progression.getState('w1_l01')).toBe('COMPLETED');
     expect(s.progression.getState('w1_l02')).toBe('AVAILABLE');
-    // a conquista "Primeira Aventura" é concedida
-    expect(out.achievements).toContain('first_adventure');
+    // "Primeira Aventura" agora depende de concluir uma AVENTURA inteira (não uma etapa):
+    // ver tests/aventuras.test.ts.
+    expect(out.achievements).not.toContain('first_adventure');
     const expectedLevelPart = 90 + Math.round((ECONOMY.levelRewards.main.firstCompletion + 2 * ECONOMY.perNewStar) * 1.1);
     expect(out.totalDivertis).toBe(expectedLevelPart);
     expect(s.currency.balance).toBeGreaterThanOrEqual(before + expectedLevelPart);

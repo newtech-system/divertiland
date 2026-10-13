@@ -40,7 +40,9 @@ export type SkillFocus =
   | 'decision_making'
   | 'creativity'
   | 'attention'
-  | 'empathy';
+  | 'empathy'
+  /** Cooperar: dividir tarefas e combinar com a equipe (A05). */
+  | 'cooperation';
 
 export type ItemSlot =
   | 'head'

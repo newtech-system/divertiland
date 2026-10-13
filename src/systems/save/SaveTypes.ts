@@ -1,7 +1,7 @@
 import type { CharacterId, DifficultyId, ItemSlot } from '../../core/types';
 
 /** Versão atual do formato do save. Aumente e adicione uma migração em SaveSchema.ts. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface LevelProgress {
   /** Concluída pelo menos uma vez. */
@@ -19,6 +19,48 @@ export interface LevelProgress {
   collectiblesFound: string[];
   firstRewardClaimed: boolean;
   threeStarRewardClaimed: boolean;
+}
+
+/**
+ * Progresso de uma AVENTURA (seção 8 do V2). É aqui que vivem as coisas permanentes:
+ * etapas internas concluídas, objetivos de estrela cumpridos e ursinhos dourados.
+ *
+ * As estrelas são guardadas como CONJUNTO de objetivos cumpridos, nunca como número
+ * somado — melhorar de 1 para 3 estrelas acrescenta 2 ao total, e repetir não soma nada
+ * (seção 17.2).
+ */
+export interface AdventureProgress {
+  /** Concluída pelo menos uma vez. */
+  completed: boolean;
+  /** Etapas internas já concluídas (ids estáveis). */
+  stagesDone: string[];
+  /** Ids dos objetivos de estrela já cumpridos alguma vez (a conclusão conta como um). */
+  objectivesMet: string[];
+  /** Ursinhos dourados encontrados, por id PERMANENTE. */
+  goldens: string[];
+  completions: number;
+  completedDifficulties: DifficultyId[];
+  secretsFound: string[];
+  bestTimeSec: number | null;
+  bestCoins: number;
+  /** Jogada atual dentro da aventura (0 = primeira), para retomar de onde parou. */
+  runIndex: number;
+}
+
+/**
+ * Lançamento no livro-caixa de recompensas (seção 19.2).
+ * Toda recompensa FINITA passa por aqui com uma chave estável: repetir o pedido
+ * (clique duplo, duas abas, falha de rede) devolve o que já existe e não credita de novo.
+ */
+export interface LedgerEntry {
+  /** Chave de idempotência: perfil + campanha + aventura + objetivo. */
+  key: string;
+  kind: 'divertis' | 'tokens' | 'item' | 'golden' | 'star';
+  amount: number;
+  reason: string;
+  at: number;
+  /** true = ambiente de simulação; NUNCA vale como direito a prêmio real (seção 18.6). */
+  simulated: boolean;
 }
 
 /** Progresso salvo no meio de uma fase (estado IN_PROGRESS). */
@@ -43,6 +85,17 @@ export interface ProfileData {
   divertis: number;
   totalEarned: number;
   levels: Record<string, LevelProgress>;
+  /** Progresso das cinco aventuras (o que vale para estrelas, coleção e recompensas). */
+  adventures: Record<string, AdventureProgress>;
+  /**
+   * Pontos de Troca Divertiland (seção 18.1): saldo SEPARADO dos Divertis, para escolher
+   * brindes presenciais. Hoje existe apenas em **simulação** — nenhum resgate real.
+   */
+  tokens: number;
+  /** Chaves de recompensa já concedidas (idempotência, seção 19.2). */
+  grantedKeys: string[];
+  /** Histórico de lançamentos (últimos 300). */
+  ledger: LedgerEntry[];
   inProgress: InProgressRun | null;
   /** Itens possuídos (os padrões são adicionados automaticamente). */
   inventory: string[];

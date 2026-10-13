@@ -1,9 +1,12 @@
 import { CHARACTER_IDS, DIFFICULTY_IDS, ITEM_SLOTS, type CharacterId, type DifficultyId } from '../../core/types';
 import { isFiniteNumber, clamp } from '../../core/util';
 import { createLogger } from '../../core/Logger';
+import { ADVENTURES } from '../../data/adventures';
 import {
   SAVE_VERSION,
+  type AdventureProgress,
   type InProgressRun,
+  type LedgerEntry,
   type LevelProgress,
   type ProfileData,
   type SaveData,
@@ -62,6 +65,21 @@ export function defaultLevelProgress(): LevelProgress {
   };
 }
 
+export function defaultAdventureProgress(): AdventureProgress {
+  return {
+    completed: false,
+    stagesDone: [],
+    objectivesMet: [],
+    goldens: [],
+    completions: 0,
+    completedDifficulties: [],
+    secretsFound: [],
+    bestTimeSec: null,
+    bestCoins: 0,
+    runIndex: 0,
+  };
+}
+
 export function createProfile(
   id: string,
   name: string,
@@ -80,6 +98,10 @@ export function createProfile(
     divertis: startingDivertis,
     totalEarned: 0,
     levels: {},
+    adventures: {},
+    tokens: 0,
+    grantedKeys: [],
+    ledger: [],
     inProgress: null,
     inventory: [],
     seenItems: [],
@@ -127,6 +149,44 @@ function sanitizeLevelProgress(v: unknown): LevelProgress {
   };
 }
 
+function sanitizeAdventureProgress(v: unknown): AdventureProgress {
+  const d = defaultAdventureProgress();
+  if (!isObj(v)) return d;
+  return {
+    completed: bool(v.completed, d.completed),
+    stagesDone: strArray(v.stagesDone),
+    objectivesMet: strArray(v.objectivesMet),
+    goldens: strArray(v.goldens),
+    completions: int(v.completions, 0),
+    completedDifficulties: strArray(v.completedDifficulties).filter((x): x is DifficultyId =>
+      DIFFICULTY_IDS.includes(x as DifficultyId),
+    ),
+    secretsFound: strArray(v.secretsFound),
+    bestTimeSec: isFiniteNumber(v.bestTimeSec) && v.bestTimeSec > 0 ? v.bestTimeSec : null,
+    bestCoins: int(v.bestCoins, 0),
+    runIndex: int(v.runIndex, 0, 0, 20),
+  };
+}
+
+function sanitizeLedger(v: unknown): LedgerEntry[] {
+  if (!Array.isArray(v)) return [];
+  const out: LedgerEntry[] = [];
+  for (const e of v.slice(-300)) {
+    if (!isObj(e) || typeof e.key !== 'string') continue;
+    out.push({
+      key: e.key.slice(0, 120),
+      kind: oneOf(e.kind, ['divertis', 'tokens', 'item', 'golden', 'star'] as const, 'divertis'),
+      amount: int(e.amount, 0, -1e9, 1e9),
+      reason: str(e.reason, 'recompensa', 80),
+      at: int(e.at, Date.now(), 0, 1e15),
+      // Qualquer lançamento sem marca explícita é tratado como simulação: nunca
+      // transformar saldo antigo de teste em direito a prêmio real (B40, seção 18.6).
+      simulated: bool(e.simulated, true),
+    });
+  }
+  return out;
+}
+
 function sanitizeInProgress(v: unknown): InProgressRun | null {
   if (!isObj(v) || typeof v.levelId !== 'string') return null;
   return {
@@ -160,6 +220,16 @@ export function sanitizeProfile(v: unknown, index: number): ProfileData | null {
       if (typeof lid === 'string' && lid.length < 60) p.levels[lid] = sanitizeLevelProgress(lp);
     }
   }
+  if (isObj(v.adventures)) {
+    for (const [aid, ap] of Object.entries(v.adventures)) {
+      if (typeof aid === 'string' && aid.length < 40) p.adventures[aid] = sanitizeAdventureProgress(ap);
+    }
+  }
+  p.tokens = int(v.tokens, 0, 0, 1e7);
+  p.grantedKeys = Array.isArray(v.grantedKeys)
+    ? [...new Set(v.grantedKeys.filter((x: unknown): x is string => typeof x === 'string' && x.length < 120))].slice(-4000)
+    : [];
+  p.ledger = sanitizeLedger(v.ledger);
   p.inProgress = sanitizeInProgress(v.inProgress);
   p.inventory = strArray(v.inventory);
   p.seenItems = strArray(v.seenItems);
@@ -237,7 +307,92 @@ type Migration = (raw: Record<string, any>) => Record<string, any>;
  * Migrações por versão: MIGRATIONS[n] transforma um save da versão n para n+1.
  * Exemplo futuro: MIGRATIONS[1] = (raw) => ({ ...raw, version: 2, novoCampo: ... })
  */
-const MIGRATIONS: Record<number, Migration> = {};
+const MIGRATIONS: Record<number, Migration> = {
+  /**
+   * v1 → v2: o jogo passou de dez fases pequenas para CINCO AVENTURAS (seção 24.4).
+   *
+   * Regras desta migração:
+   *  - nada é apagado: `levels` continua guardando o histórico de cada fase/etapa;
+   *  - uma aventura só vira "concluída" se TODAS as fases que a compõem já estavam
+   *    concluídas — e já entra com a recompensa de primeira conclusão marcada como paga,
+   *    para não pagar duas vezes (B39);
+   *  - as estrelas antigas NÃO viram estrelas de aventura (os objetivos são outros);
+   *    a criança ganha a estrela de conclusão e pode conquistar as outras duas jogando;
+   *  - ursinhos dourados são traduzidos para o id PERMANENTE pela tabela de cada
+   *    aventura, então quem já achou continua com ele;
+   *  - Divertis antigos continuam valendo (é moeda de brincadeira); Pontos de Troca
+   *    começam em zero — saldo local nunca comprova direito a prêmio real (B40).
+   */
+  1: (raw) => {
+    const profiles = Array.isArray(raw.profiles) ? raw.profiles : [];
+    for (const p of profiles) {
+      if (!isObj(p)) continue;
+      const levels: Record<string, any> = isObj(p.levels) ? p.levels : {};
+      const advs: Record<string, any> = isObj(p.adventures) ? { ...p.adventures } : {};
+      for (const adv of ADVENTURES) {
+        const prev = isObj(advs[adv.id]) ? advs[adv.id] : null;
+        const ap: Record<string, any> = prev ?? {
+          completed: false,
+          stagesDone: [],
+          objectivesMet: [],
+          goldens: [],
+          completions: 0,
+          completedDifficulties: [],
+          secretsFound: [],
+          bestTimeSec: null,
+          bestCoins: 0,
+          runIndex: 0,
+        };
+        const stagesDone = new Set<string>(Array.isArray(ap.stagesDone) ? ap.stagesDone : []);
+        const goldens = new Set<string>(Array.isArray(ap.goldens) ? ap.goldens : []);
+        const secrets = new Set<string>(Array.isArray(ap.secretsFound) ? ap.secretsFound : []);
+        const diffs = new Set<string>(Array.isArray(ap.completedDifficulties) ? ap.completedDifficulties : []);
+        let allDone = adv.runs.length > 0;
+        for (const run of adv.runs) {
+          const lp = levels[run.levelId];
+          const done = isObj(lp) && lp.completed === true;
+          if (done) for (const sid of run.stages) stagesDone.add(sid);
+          else allDone = false;
+          if (isObj(lp)) {
+            for (const c of Array.isArray(lp.collectiblesFound) ? lp.collectiblesFound : []) {
+              const gid = adv.goldens.find((g) => g.from === c)?.id;
+              if (gid) goldens.add(gid);
+            }
+            for (const sec of Array.isArray(lp.secretsFound) ? lp.secretsFound : []) secrets.add(String(sec));
+            for (const d of Array.isArray(lp.completedDifficulties) ? lp.completedDifficulties : []) diffs.add(String(d));
+          }
+        }
+        ap.stagesDone = [...stagesDone];
+        ap.goldens = [...goldens];
+        ap.secretsFound = [...secrets];
+        ap.completed = ap.completed === true || allDone;
+        if (allDone) {
+          ap.completions = Math.max(1, Number(ap.completions) || 0);
+          ap.completedDifficulties = [...diffs];
+          // Estrela da conclusão (as outras duas são conquistadas jogando).
+          const met = new Set<string>(Array.isArray(ap.objectivesMet) ? ap.objectivesMet : []);
+          met.add('completed');
+          ap.objectivesMet = [...met];
+        }
+        advs[adv.id] = ap;
+      }
+      p.adventures = advs;
+      p.tokens = 0;
+      // Chaves já concedidas: marca a primeira conclusão das aventuras migradas como
+      // paga, para a migração nunca pagar de novo (nem se rodar duas vezes).
+      const keys = new Set<string>(Array.isArray(p.grantedKeys) ? p.grantedKeys.filter((k: unknown) => typeof k === 'string') : []);
+      for (const adv of ADVENTURES) {
+        if (advs[adv.id]?.completed) {
+          keys.add(`${p.id}:${adv.id}:primeira`);
+          for (const g of advs[adv.id].goldens ?? []) keys.add(`${p.id}:golden:${g}`);
+        }
+      }
+      p.grantedKeys = [...keys];
+      if (!Array.isArray(p.ledger)) p.ledger = [];
+    }
+    return { ...raw, version: 2, profiles };
+  },
+};
 
 export function migrate(raw: unknown): SaveData {
   if (!isObj(raw)) return defaultSave();

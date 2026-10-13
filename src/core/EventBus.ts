@@ -3,6 +3,8 @@
 
 export interface GameEvents {
   divertisChanged: { total: number; delta: number; reason: string };
+  /** Pontos de Troca Divertiland (em simulação — ver data/rewards.ts). */
+  tokensChanged: { total: number; delta: number; reason: string };
   starsChanged: { total: number };
   levelCompleted: { levelId: string; stars: number };
   levelUnlocked: { levelId: string };

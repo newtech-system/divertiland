@@ -1,5 +1,7 @@
 import type { EventBus } from '../core/EventBus';
 import { ACHIEVEMENTS, type AchievementDef } from '../data/achievements';
+import { ADVENTURES } from '../data/adventures';
+import type { AdventureService } from './AdventureService';
 import type { CurrencyManager } from './CurrencyManager';
 import type { InventoryManager } from './InventoryManager';
 import type { ProfileManager } from './ProfileManager';
@@ -17,6 +19,15 @@ export class AchievementSystem {
     private bus: EventBus,
   ) {}
 
+  /**
+   * Ligado depois da construção (o AdventureService também usa as conquistas).
+   * Sem ele, as conquistas de aventura ficam em zero em vez de quebrar.
+   */
+  private adventures: AdventureService | null = null;
+  useAdventures(a: AdventureService): void {
+    this.adventures = a;
+  }
+
   isUnlocked(id: string): boolean {
     return !!this.profiles.active?.achievements[id];
   }
@@ -32,13 +43,20 @@ export class AchievementSystem {
       case 'totalEarned':
         return { current: p.totalEarned, target: c.amount };
       case 'totalStars':
-        return { current: this.progression.totalStars(), target: c.count };
+        // As estrelas da campanha são as das aventuras (15 no máximo).
+        return { current: this.adventures ? this.adventures.totalStars() : this.progression.totalStars(), target: c.count };
       case 'secretsFound':
         return { current: p.secrets.length, target: c.count };
       case 'itemsOwned':
         return { current: this.inventory.earnedCount(), target: c.count };
       case 'stat':
         return { current: p.stats[c.key] ?? 0, target: c.value };
+      case 'adventuresCompleted': {
+        const a = this.adventures;
+        return { current: a ? ADVENTURES.filter((x) => a.progress(x.id).completed).length : 0, target: c.count };
+      }
+      case 'goldensFound':
+        return { current: this.adventures ? this.adventures.goldenCount().found : 0, target: c.count };
     }
   }
 
