@@ -1,0 +1,5 @@
+Coloque aqui os arquivos de arte oficiais (PNG com fundo transparente de preferencia):
+- jhow-corpo.png, jhow-rosto.png
+- mina-corpo.png, mina-rosto.png
+- fotos do parque: parque-01.jpg, parque-02.jpg ...
+Eu leio esta pasta e uso nas telas do jogo.
