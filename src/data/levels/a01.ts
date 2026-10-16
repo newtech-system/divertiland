@@ -77,11 +77,17 @@ for (let z = 0; z < 190; z += 12) {
   if (z % 24 === 12) add({ t: 'decor', kind: 'lightPanel', pos: [9, H - 0.06, z + 3], color: PALETTE.cyan, size: 0.35 });
 }
 
-// Murais da galáxia e grafismos neon nas paredes externas (fotos do parque).
-for (let z = 4; z < 186; z += 26) {
-  add({ t: 'decor', kind: 'mural', pos: [-15.6, 8.5, z], yaw: Math.PI / 2, size: 2.6, text: z % 52 === 4 ? 'neon' : 'espaco' });
-  add({ t: 'decor', kind: 'mural', pos: [15.6, 8.5, z + 13], yaw: -Math.PI / 2, size: 2.6, text: z % 52 === 30 ? 'neon' : 'espaco' });
+// Murais da galáxia e grafismos neon NAS PAREDES QUE A CRIANÇA VÊ (fotos do parque).
+// Ficam nas paredes internas dos setores largos, acima da linha dos saltos.
+for (let z = 58; z < 130; z += 22) {
+  add({ t: 'decor', kind: 'mural', pos: [-8.65, 9, z], yaw: Math.PI / 2, size: 2.2, text: z % 44 === 14 ? 'neon' : 'espaco' });
+  add({ t: 'decor', kind: 'mural', pos: [8.65, 9, z + 11], yaw: -Math.PI / 2, size: 2.2, text: z % 44 === 36 ? 'neon' : 'espaco' });
 }
+// Entrada e corredor de chegada
+add({ t: 'decor', kind: 'mural', pos: [-7.65, 8.5, 2], yaw: Math.PI / 2, size: 1.9, text: 'espaco' });
+add({ t: 'decor', kind: 'mural', pos: [7.65, 8.5, 2], yaw: -Math.PI / 2, size: 1.9, text: 'neon' });
+add({ t: 'decor', kind: 'mural', pos: [-11.65, 9.5, 168], yaw: Math.PI / 2, size: 2.4, text: 'espaco' });
+add({ t: 'decor', kind: 'mural', pos: [11.65, 9.5, 168], yaw: -Math.PI / 2, size: 2.4, text: 'neon' });
 
 // ============================================================ A — ENTRADA (etapa 1)
 wallX(-8, -8, 10, 0, H, WALL);

@@ -127,8 +127,10 @@ export function muralTexture(kind: 'espaco' | 'neon' = 'espaco', seed = 1): THRE
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d')!;
-  let s = seed * 9301 + 49297;
-  const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  // A semente vem da posicao na parede e pode ser NEGATIVA (parede do lado -x): sem o
+  // valor absoluto o sorteio dava numeros negativos e o canvas recusava o raio.
+  let s = Math.abs(Math.round(seed)) * 9301 + 49297;
+  const rnd = () => ((s = Math.abs((s * 9301 + 49297) % 233280)) / 233280);
 
   const fundo = ctx.createLinearGradient(0, 0, w, h);
   fundo.addColorStop(0, '#0b0620');
