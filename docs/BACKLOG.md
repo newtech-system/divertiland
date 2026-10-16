@@ -417,9 +417,9 @@ aventura). A rota de QA dela volta a terminar: **43,5 s, 0 quedas**.
 atravessar). Quem chegava no Robô Beto já com as duas ouvia *"me traga as 2 peças"* e
 **nada acontecia**: por dentro ele até ficava pronto para agradecer, mas só entregava na
 conversa seguinte — e não havia motivo nenhum para falar com ele de novo.
-**Correção:** quando a criança já tem tudo, o amigo recebe na hora. Ele diz o pedido,
-e 2 segundos depois agradece e **abre a porta**.
-**Medido:** pegar as duas peças → UMA conversa →  ligada e portão aberto.
+**Correção:** quando a criança já tem tudo, o amigo recebe na hora. Ele diz o pedido e,
+2 segundos depois, agradece e **abre a porta**.
+**Medido:** pegar as duas peças → UMA conversa → flag "caminhoPronto" ligada e portão aberto.
 
 ### R06 — Botões de chão só acendiam depois de conversar ✅
 Mesmo defeito, outra forma: na fase da Mamãe Ursa, pisar nos 4 botões antes de falar com
@@ -433,51 +433,9 @@ os botões acesos**. Medido: pegar a peça da ponte → sair → Continuar → a
 pega.
 
 ### R08 — "Onde procurar" e "o que aconteceu depois" eram o mesmo texto ✅
-Separados: A sintaxe deste comando :
-
-WHERE [/R dir] [/Q] [/F] [/T] pattern...
-
-DescriÆo:
-    Exibe o local de arquivos correspondente ao padrÆo de pesquisa.
-    Por padrÆo, a pesquisa  feita no diret¢rio atual e
-    nos caminhos especificados pela vari vel de ambiente PATH.
-
-Lista de parmetros:
-    /R       Pesquisa recursivamente e exibe os arquivos correspondentes
-             ao padrÆo especificado, comeando pelo diret¢rio especificado.
-
-    /Q       Retorna apenas o c¢digo de sa¡da, sem exibir a lista
-             de arquivos correspondentes. (Modo silencioso)
-
-    /F       Exibe o nome de arquivo correspondente entre aspas duplas.
-
-    /T       Exibe o tamanho de arquivo, a data e a hora da £ltima modificaÆo
-             para todos os arquivos correspondentes.
-
-    padrÆo   Especifica o padrÆo de pesquisa para os arquivos para
-             correspondncia. Os caracteres curinga * e ? podem ser usados
-             no padrÆo. Os formatos "$env:pattern" e "path:pattern" tambm
-             podem ser especificados, em que "env"  uma vari vel de ambiente
-             e a pesquisa  feita nos caminhos especificados na vari vel
-             de ambiente "env". Esses formatos nÆo devem ser usados
-             com /R. A pesquisa tambm  feita acrescentando-se as
-             extensäes da vari vel PATHEXT ao padrÆo.
-
-    /?       Exibe esta mensagem de ajuda.
-
-  OBS.: a ferramenta retorna um n¡vel de erro 0 se
-        a busca tiver xito, 1 se nÆo tiver xito e
-        2 para falhas ou erros.
-
-Exemplos:
-    WHERE /?
-    WHERE myfilename1 myfile????.*
-    WHERE $windir:*.* 
-    WHERE /r c:\windows *.exe *.dll *.bat  
-    WHERE /Q ??.??? 
-    WHERE "c:\windows;c:\windows\system32:*.dll"
-    WHERE /f /t *.dll  é dito **durante** a missão (onde estão as coisas) e  **depois**
-(a história continua). Antes o Beto repetia o endereço das peças logo depois de recebê-las.
+Separados em dois campos: um é dito **durante** a missão (onde estão as coisas) e o outro
+**depois** (a história continua). Antes o Beto repetia o endereço das peças logo depois de
+recebê-las.
 
 ## Checagem do sistema de missões inteiro (16/10)
 
@@ -494,4 +452,4 @@ pegar, ou pegar primeiro e depois falar:
 | Mamãe Ursa | Robô Beto (4 botões) | ✅ *(corrigido em R06)* | ✅ |
 | Mamãe Ursa | Pato Quack (3 patinhos) | ✅ sala das almofadas abre | ✅ |
 
-E a Aventura 1 inteira continua terminando: 6 etapas, 0 quedas.
+E a Aventura 1 inteira continua terminando: 6 etapas, 0 quedas, 96 testes automáticos.
