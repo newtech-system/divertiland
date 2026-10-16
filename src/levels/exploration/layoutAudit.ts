@@ -452,6 +452,29 @@ export function findTraps(layout: LevelLayout, diff: DifficultyId): AuditIssue[]
   });
   if (biggest >= 0) good.add(biggest);
 
+  // TRAMPOLIM TAMBÉM É SAÍDA. Uma área com trampolim não é armadilha: o quique leva de
+  // 4,5 m (primeiro) a 10 m (quarto) de altura. Só vale se existir algum apoio ao
+  // alcance desse quique — trampolim que não leva a lugar nenhum continua sendo
+  // armadilha.
+  const apoios = supportsOf(layout, diff, 'connect');
+  for (const e of entitiesFor(layout, diff)) {
+    if (e.t !== 'trampoline') continue;
+    const ix = Math.floor((e.pos[0] - minX) / STEP);
+    const iz = Math.floor((e.pos[2] - minZ) / STEP);
+    const base = e.pos[1];
+    const destino = apoios.some((a) => {
+      const sobe = a.top - base;
+      if (sobe < 0.5 || sobe > REACH.trampoline[REACH.trampoline.length - 1]) return false;
+      return dist2D(e.pos[0], e.pos[2], a) <= 6;
+    });
+    if (!destino) continue;
+    for (let dx = -3; dx <= 3; dx++)
+      for (let dz = -3; dz <= 3; dz++) {
+        const i = (ix + dx) * nz + (iz + dz);
+        if (i >= 0 && i < comp.length && comp[i] >= 0) good.add(comp[i]);
+      }
+  }
+
   /**
    * Tem algo sólido na ALTURA h deste quadradinho? É o que diz se uma parede
    * atravessa o caminho na altura em que a criança está — e não só perto do chão.

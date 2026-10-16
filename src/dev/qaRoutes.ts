@@ -71,7 +71,7 @@ export const QA_ROUTES: Record<string, AutoWaypoint[]> = {
     { x: 6, z: 109 }, { x: 6, z: 112.4, y: 4 }, { x: 4.8, z: 115.5, y: 4 }, { x: 6, z: 119.5, y: 4, needGround: true, radius: 1.3 },
     { x: 6, z: 123, y: 4 }, { x: 5, z: 126.5, y: 4.6 }, { x: 7, z: 129.5, y: 4 }, { x: 5.4, z: 132.4, y: 4 }, { x: 0, z: 136, y: 4 },
     { x: -4, z: 137, y: 4, cp: true }, { x: 0, z: 139, y: 4 }, { x: 0, z: 157, y: 0 }, { x: -3, z: 158.5, cp: true },
-    { x: 0, z: 172.4, bounceTo: 8.4, bounces: 3 }, { x: 0, z: 178, y: 7 }, { x: 0, z: 182, y: 7 },
+    { x: 0, z: 173, bounceTo: 8.4, bounces: 3 }, { x: 0, z: 178, y: 7 }, { x: 0, z: 182, y: 7 },
   ],
   w1_l05: [
     { x: 0, z: 6, cp: true }, { x: 1.5, z: 11.5, y: 3, needGround: true }, { x: 1.5, z: 16, y: 3, needGround: true },

@@ -216,7 +216,8 @@ add(
   { t: 'netBridge', min: [-1.5, 3.8, 90], max: [1.5, 4, 102], color: '#ffffff' },
   { t: 'coinLine', from: [0, 4.7, 92], to: [0, 4.7, 101], count: 7 },
   // PEÇA DE APOIO #1: está no meio da ponte, dá para pegar atravessando.
-  { t: 'questItem', id: 'apoio_1', group: 'apoio', kind: 'stack', icon: '🧩', pos: [0, 4.5, 96], color: PALETTE.orange, scale: 1.1 },
+  { t: 'questItem', id: 'apoio_1', group: 'apoio', kind: 'stack', icon: '🧩', pos: [0, 4.5, 96], color: PALETTE.orange, scale: 1.3 },
+  { t: 'decor', kind: 'ring', pos: [0, 5.6, 96], color: PALETTE.orange, size: 0.9 },
   { t: 'ballpit', min: [-9, 0.02, 90], max: [9, 0.02, 102], depth: 0.75 },
   { t: 'gem', pos: [5, 1.2, 96] },
   // PISTA #1: dentro da piscina de bolinhas (cair aqui é diversão, não castigo).
@@ -258,10 +259,10 @@ add(
     yaw: Math.PI,
     intro:
       'Snif... eu perdi o meu ursinho aqui no parque. Ele é marrom e tem um laço rosa. Eu durmo abraçada com ele... Você me ajuda a procurar?',
-    mission: 'Ache as 3 pistas do ursinho',
+    mission: 'Ache as 3 pistas: piscina, portinha e plataformas',
     quest: { type: 'collect', group: 'pistas', count: 3, flag: 'achouPistas' },
     thanks: 'Três pistas! Então ele foi para o recanto tranquilo, atrás da passagem!',
-    hint: 'As pistas estão na piscina de bolinhas, atrás da portinha do botão e no caminho das plataformas.',
+    hint: 'Uma está na piscina de bolinhas, outra atrás da portinha do botão e outra no caminho das plataformas.',
     stageMeet: 'a01_e2',
     stage: 'a01_e3',
     // SEGUNDA parte: a história só termina quando o ursinho volta para a MÃO dela.
@@ -287,8 +288,8 @@ msg('m_bia', [-9, 4, 102.2], [9, 7, 105], 'Alguém está chorando ali... vamos v
 // ============================================================ G — OS DOIS CAMINHOS (pistas 2 e 3 + apoio 2)
 add(
   // B07: placas nas paredes laterais, viradas para quem chega, acima da linha do salto.
-  { t: 'sign', pos: [8.7, 7.6, 112], yaw: -Math.PI / 2, text: '⬅️ Plataformas', color: PALETTE.orange, w: 3, h: 1 },
-  { t: 'sign', pos: [-8.7, 7.6, 112], yaw: Math.PI / 2, text: 'Portinha ➡️', color: PALETTE.green, w: 3, h: 1 },
+  { t: 'sign', pos: [8.7, 7.6, 112], yaw: -Math.PI / 2, text: '⬅️ Plataformas: 1 pista + 1 peça', color: PALETTE.orange, w: 3.4, h: 1 },
+  { t: 'sign', pos: [-8.7, 7.6, 112], yaw: Math.PI / 2, text: 'Portinha: 1 pista ➡️', color: PALETTE.green, w: 3.4, h: 1 },
   { t: 'box', min: [-4, 0, 110], max: [2.6, 7.5, 134], color: PALETTE.purpleLight },
   { t: 'decor', kind: 'neonSign', pos: [-0.7, 9, 110.1], yaw: Math.PI, text: 'DOIS CAMINHOS', color: PALETTE.yellow, size: 0.7 },
   // --- Caminho tranquilo (-X): passarela com botão, portão, cortina secreta e o Beto
@@ -317,8 +318,16 @@ add(
   { t: 'coinArc', center: [-12, 4.8, 127], radius: 1.8, count: 8 },
   { t: 'decor', kind: 'star', pos: [-12, 8.4, 126], color: PALETTE.yellow, size: 1.3 },
   { t: 'hintTrail', points: [[-6, 4.5, 121], [-7.5, 4.5, 123.5], [-8.6, 4.5, 125.5], [-10, 4.5, 126]], minHint: 1 },
-  // --- Caminho das plataformas (+X), sobre um fosso que devolve ao ponto seguro
-  { t: 'killZone', min: [2.6, -1, 110], max: [9, 2.6, 134] },
+  // --- Caminho das plataformas (+X), sobre uma PISCINA DE BOLINHAS
+  // Antes havia aqui uma zona de queda: quem errava o salto voltava lá atrás. Como as
+  // duas coisas obrigatórias da missão (a pista 3 e a peça de apoio) ficam neste
+  // caminho, errar o pulo virava um castigo que podia travar a aventura inteira.
+  // Agora a queda é divertida e o trampolim devolve a criança para o começo do caminho.
+  { t: 'ballpit', min: [2.9, 0.02, 110.5], max: [8.9, 0.02, 133.5], depth: 0.75 },
+  { t: 'trampoline', pos: [6, 0.4, 113], radius: 1.8 },
+  { t: 'trampoline', pos: [6, 0.4, 130], radius: 1.8 },
+  { t: 'decor', kind: 'balloons', pos: [8.4, 0, 121] },
+  { t: 'coinLine', from: [4, 0.8, 116], to: [4, 0.8, 128], count: 6 },
   { t: 'platform', pos: [6, 4, 112.4], size: [2.4, 2.4], scales: true, color: PALETTE.orange },
   { t: 'platform', pos: [4.8, 4, 115.5], size: [2.2, 2.2], scales: true, color: PALETTE.cyan },
   // PONTOS SEGUROS SÓ NO BICHO-PREGUIÇA: a ajuda "Vamos juntos?" leva a criança de um
@@ -345,9 +354,9 @@ add(
   { t: 'platform', pos: [8, 6.4, 125.4], size: [1.6, 1.6], color: PALETTE.yellow, onlyIn: ['jaguar'] },
   { t: 'gem', pos: [8, 7.4, 125.4], onlyIn: ['jaguar'] },
 );
-msg('m_choice', [-9, 4, 108.6], [9, 7, 110], 'Dois caminhos: as plataformas ou a portinha do botão. Tem pista nos dois!', {
+msg('m_choice', [-9, 4, 108.6], [9, 7, 110], 'Os dois caminhos têm coisas da missão: as plataformas e a portinha do botão. Dá para fazer na ordem que você quiser!', {
   icon: '🤔',
-  mission: 'Ache as 3 pistas do ursinho',
+  mission: 'Ache as 3 pistas: piscina, portinha e plataformas',
 });
 msg('m_button', [-9, 4, 111], [-4, 7, 113.5], 'Aperte o botão vermelho para abrir a portinha! (E ou ✋)', {
   icon: '🔴',
@@ -356,7 +365,14 @@ msg('m_button', [-9, 4, 111], [-4, 7, 113.5], 'Aperte o botão vermelho para abr
 });
 msg('m_pista2', [-9, 4, 118.6], [-4, 7, 120], 'Um laço rosa no chão! É igualzinho ao do ursinho da Bia.', { icon: '🎀' });
 msg('m_curtain', [-9, 4, 120.5], [-4, 7, 123], 'Hmm... essa cortina colorida parece diferente!', { icon: '🤔', minHint: 2 });
-msg('m_plats', [2.6, 4, 110], [9, 7, 111.5], 'Pule de plataforma em plataforma!', { icon: '🦘', mission: 'Pule nas plataformas' });
+msg('m_plats', [2.6, 4, 110], [9, 7, 111.5], 'Pule de plataforma em plataforma! Se cair, é piscina de bolinhas.', {
+  icon: '🦘',
+  mission: 'Pule nas plataformas',
+});
+msg('m_queda_plats', [2.9, 0, 110.5], [8.9, 2, 133.5], 'Caiu na piscina! Pule no trampolim para voltar lá para cima.', {
+  icon: '🤸',
+  mission: 'Volte pelo trampolim',
+});
 msg('m_pista3', [2.6, 4, 121], [9, 7, 125], 'Pelo marrom e um fiozinho de laço ROSA. O ursinho dela passou por aqui!', { icon: '🐾' });
 
 // ============================================================ H — PASSAGEM E RECANTO TRANQUILO (etapa 5)
@@ -377,10 +393,10 @@ add(
     pos: [-5.5, 4, 137.8],
     yaw: -Math.PI / 2,
     intro: 'Bip-bop! A porta do recanto tranquilo está sem apoio. Me traga as 2 peças de encaixe e eu monto o caminho!',
-    mission: 'Ache as 2 peças de apoio',
+    mission: 'Ache as 2 peças: ponte de rede e plataformas',
     quest: { type: 'collect', group: 'apoio', count: 2, flag: 'caminhoPronto' },
     thanks: 'Bip! Encaixou! A porta está firme, pode entrar!',
-    hint: 'Uma peça fica no meio da ponte de rede e a outra no caminho das plataformas.',
+    hint: 'Uma está no meio da ponte de rede e a outra no caminho das plataformas, na plataforma verde.',
     stage: 'a01_e4',
   },
   { t: 'sign', pos: [-8.7, 6.4, 134.6], yaw: Math.PI / 2, text: '🧩 Beto monta a porta', color: PALETTE.cyan, w: 3, h: 1 },

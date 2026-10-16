@@ -3,6 +3,8 @@ import { ADVENTURES, getAdventure } from '../src/data/adventures';
 import { EXTRA_LEVELS, getLevel } from '../src/data/worlds';
 import { LEVEL_A01 } from '../src/data/levels/a01';
 import { LEVEL_MEU_MUNDO } from '../src/data/levels/meu_mundo';
+import { LEVEL_W1_L09 } from '../src/data/levels/w1_l09';
+import { LEVEL_W1_L10 } from '../src/data/levels/w1_l10';
 import { CheckpointManager } from '../src/levels/exploration/CheckpointManager';
 import type { CheckpointInfo } from '../src/levels/exploration/LevelBuilder';
 import { GameServices } from '../src/systems/GameServices';
@@ -385,5 +387,58 @@ describe('Quem já jogava não ganha nem perde nada duas vezes (migração)', ()
     const pagos = s.profiles.active!.ledger.filter((e) => e.kind === 'golden').map((e) => e.key);
     expect(pagos).toEqual([]);
     expect(s.adventures.progress('a04').completed).toBe(true);
+  });
+});
+
+describe('Ninguém fica sem saber onde procurar (relato da proprietária, 16/10)', () => {
+  /**
+   * A Aventura 1 travou para a proprietária: ela não achava as peças de apoio.
+   * Eram DUAS causas somadas:
+   *  1. a dica que diz ONDE procurar só era falada no agradecimento — ou seja, depois de
+   *     a missão acabar, quando já não servia para nada;
+   *  2. as duas coisas obrigatórias que ficam no caminho das plataformas estavam em cima
+   *     de uma zona de queda, e errar o salto mandava a criança lá para trás.
+   */
+  const LAYOUTS = [
+    ['a01', LEVEL_A01],
+    ['w1_l09', LEVEL_W1_L09],
+    ['w1_l10', LEVEL_W1_L10],
+  ] as const;
+
+  it('todo amigo que pede uma missão sabe dizer onde procurar', () => {
+    for (const [nome, layout] of LAYOUTS) {
+      for (const e of layout.entities) {
+        if (e.t !== 'friend' || !e.quest) continue;
+        expect([nome, e.id, typeof e.hint]).toEqual([nome, e.id, 'string']);
+        expect([nome, e.id, (e.hint ?? '').length > 10]).toEqual([nome, e.id, true]);
+        // e a missão do HUD também precisa existir, porque fica sempre na tela
+        expect([nome, e.id, typeof e.mission]).toEqual([nome, e.id, 'string']);
+        if (e.quest2) {
+          expect([nome, e.id, typeof e.hint2]).toEqual([nome, e.id, 'string']);
+          expect([nome, e.id, typeof e.mission2]).toEqual([nome, e.id, 'string']);
+        }
+      }
+    }
+  });
+
+  it('nenhum item obrigatório da missão fica em cima de uma zona de queda', () => {
+    for (const [nome, layout] of LAYOUTS) {
+      const zonas = layout.entities.filter((e) => e.t === 'killZone');
+      for (const e of layout.entities) {
+        if (e.t !== 'questItem') continue;
+        const [x, , z] = e.pos;
+        const emCima = zonas.some((k) => k.t === 'killZone' && k.min[0] <= x && k.max[0] >= x && k.min[2] <= z && k.max[2] >= z);
+        expect([nome, e.id, emCima]).toEqual([nome, e.id, false]);
+      }
+    }
+  });
+
+  it('o caminho das plataformas da A01 tem piscina embaixo e trampolim de volta', () => {
+    const e = LEVEL_A01.entities;
+    expect(e.some((x) => x.t === 'killZone')).toBe(false);
+    const piscina = e.find((x) => x.t === 'ballpit' && x.min[0] > 2 && x.min[2] > 105);
+    expect(piscina).toBeDefined();
+    const volta = e.filter((x) => x.t === 'trampoline' && x.pos[0] > 2 && x.pos[2] > 105 && x.pos[2] < 140);
+    expect(volta.length).toBeGreaterThanOrEqual(1);
   });
 });

@@ -345,3 +345,67 @@ cada ponto seguro declara de qual missão ele depende (`needsFlag`). Testes em
 - **A02–A05 continuam provisórias** (etapas do protótipo). É o Marco 3.
 - **Meu Mundo**: colocar e mover peças, expandir o terreno e visitar amigos — Marco 4.
 - **Teste com criança**: obrigatório antes de considerar a experiência aprovada.
+
+---
+
+# Revisão de 16/10/2026 — "não dá para passar da primeira fase"
+
+Relato da proprietária: *"primeira fase não está dando para passar, pois não está sendo
+encontrado as peças dos ursos para passar para o fim da fase"*. Reproduzido no jogo.
+**Eram duas causas somadas**, e as duas são corrigidas aqui.
+
+### R01 — A dica que diz ONDE procurar só era falada depois da missão acabar ✅ 🧪
+**Causa encontrada.** No sistema de missões, falar de novo com um amigo com a missão em
+andamento devolvia só o texto da missão ("Ache as 2 peças de apoio!"). O campo `hint`,
+que é justamente onde está escrito **em que lugar** as coisas estão, só era dito no
+agradecimento — ou seja, **depois** de a criança já ter achado tudo. Quem não sabia onde
+procurar não tinha como descobrir dentro do jogo.
+**Correção** (`QuestSystem.talk`): falar de novo agora diz **quanto falta e onde está**:
+
+> "Ache as 2 peças: ponte de rede e plataformas! Falta 1 de 2. Uma está no meio da ponte
+> de rede e a outra no caminho das plataformas, na plataforma verde."
+
+Vale para todas as fases com amigos (Aventura 1 e a fase da Mamãe Ursa).
+**Teste novo:** todo amigo que pede missão precisa ter dica e texto de missão escritos.
+
+### R02 — As duas coisas obrigatórias ficavam em cima de uma zona de queda ✅ 🧪
+**Causa encontrada.** A pista 3 e a 2ª peça de apoio ficam no **caminho das plataformas**.
+Embaixo das plataformas havia uma zona de queda: errar o salto mandava a criança de volta
+lá atrás. Como as placas da bifurcação diziam "plataformas **ou** portinha", dava para
+jogar o caminho tranquilo inteiro sem nunca passar por esses dois itens — e aí a porta do
+recanto (e o fim da aventura) ficava impossível.
+**Correção:**
+- a zona de queda virou **piscina de bolinhas com dois trampolins de volta**: cair não
+  castiga mais, a criança quica e tenta de novo quantas vezes quiser;
+- as placas e a mensagem da bifurcação agora dizem que **os dois caminhos têm coisas da
+  missão** ("⬅️ Plataformas: 1 pista + 1 peça" / "Portinha: 1 pista ➡️");
+- o texto da missão no HUD passou a nomear os lugares.
+
+**Medido depois da correção:** cair no caminho das plataformas deixa a criança na piscina
+(**0 quedas contadas**, nenhum recomeço) e o trampolim devolve a **4,4 m na primeira
+batida** (as plataformas estão a 4 m), chegando a 10 m se continuar pulando.
+
+**Teste novo:** nenhum item obrigatório de missão pode ficar dentro de uma zona de queda.
+
+### R03 — O validador de percurso não conhecia trampolim ✅
+Ao trocar a zona de queda pela piscina, o detector de buracos sem saída acusou
+corretamente "buraco de 122 m²" — ele não sabia que **trampolim também é saída**. Agora
+sabe: uma área com trampolim só é considerada segura se existir um apoio ao alcance do
+quique (trampolim que não leva a lugar nenhum continua sendo armadilha).
+
+### R04 — Último salto da Fase 1 antiga ✅
+Mesmo ajuste de trampolim já feito na Aventura 1 (a fase continua no código como base da
+aventura). A rota de QA dela volta a terminar: **43,5 s, 0 quedas**.
+
+## Varredura geral do app (16/10)
+
+| Verificação | Resultado |
+|---|---|
+| Testes automáticos | **96 passando** (6 arquivos) |
+| `tsc --noEmit` e `npm run build` | limpos |
+| Validador de percurso (10 cenários × 3 estilos) | **0 problemas** — alcance, plataforma isolada e buraco sem saída |
+| Corrente das missões (portão → flag → missão) | **0 problemas** em todas as fases 3D |
+| Obstrução de visão em todos os checkpoints | **0 enfeites tapando a visão** |
+| Aventura 1 inteira, 3 estilos | termina nos três, **0 quedas**, 6 etapas, 3 dourados, sala secreta |
+| Fases 3D antigas (l01, l05, l06, l07, l08, l10) | **todas terminam** pelo piloto automático |
+| Telas em 375×812 (celular) | **nenhum texto cortado, nenhum botão fora de alcance** |

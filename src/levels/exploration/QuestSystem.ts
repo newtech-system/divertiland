@@ -141,7 +141,14 @@ export class QuestSystem {
     }
     if (st === 'active') {
       if (ph.quest.type === 'pads' && ph.quest.memory) this.replayMemory(ph.quest.group);
-      h.say(d.name, d.icon, ph.mission ? `${ph.mission}!` : 'Você consegue!');
+      // Falar DE NOVO com quem pediu ajuda diz quanto falta e ONDE procurar. Antes, a
+      // dica de lugar só era dita no agradecimento — ou seja, quando já não servia para
+      // nada, e a criança ficava sem saber onde estão as coisas da missão.
+      const partes = [ph.mission ? `${ph.mission}!` : 'Você consegue!'];
+      const falta = this.missingText(ph.quest);
+      if (falta) partes.push(falta);
+      if (ph.hint) partes.push(ph.hint);
+      h.say(d.name, d.icon, partes.join(' '));
       return;
     }
     if (st === 'ready') {
@@ -165,6 +172,20 @@ export class QuestSystem {
       return;
     }
     h.say(d.name, d.icon, ph.hint ?? ph.thanks);
+  }
+
+  /** "Falta 1 de 2" — o que ainda não foi feito, em linguagem de criança. */
+  private missingText(quest: QuestDef): string | null {
+    if (quest.type === 'collect') {
+      const got = this.lvl.questItems.filter((q) => q.def.group === quest.group && q.taken).length;
+      const falta = Math.max(0, quest.count - got);
+      if (falta <= 0) return null;
+      return falta === 1 ? `Falta 1 de ${quest.count}.` : `Faltam ${falta} de ${quest.count}.`;
+    }
+    const pads = this.lvl.pads.filter((p) => p.def.group === quest.group);
+    const falta = pads.filter((p) => !p.lit).length;
+    if (falta <= 0 || quest.memory) return null;
+    return falta === 1 ? 'Falta 1 botão.' : `Faltam ${falta} botões.`;
   }
 
   /** A missão que acabou de começar já está cumprida? Então já pode agradecer. */

@@ -111,3 +111,52 @@ describe('Validação de percurso', () => {
     expect(problems).toEqual([]);
   });
 });
+
+describe('Nenhuma fase pode ficar impossível de terminar', () => {
+  /**
+   * Um portão de missão que depende de uma flag que NINGUÉM produz tranca a aventura
+   * para sempre. Este teste lê os dados de todas as fases 3D e confere a corrente
+   * inteira: portão → flag → missão de algum amigo (ou flag do próprio sistema).
+   */
+  const DO_SISTEMA = ['helpedEveryone'];
+
+  it('toda flag exigida por portão ou por amigo final é produzida por alguma missão', async () => {
+    const problemas: string[] = [];
+    for (const [id, load] of LAYOUTS) {
+      const layout = await load();
+      const produzidas = new Set<string>(DO_SISTEMA);
+      for (const e of layout.entities) {
+        if (e.t !== 'friend') continue;
+        if (e.quest) produzidas.add(e.quest.flag);
+        if (e.quest2) produzidas.add(e.quest2.flag);
+      }
+      for (const e of layout.entities) {
+        if (e.t === 'questGate' && !produzidas.has(e.flag)) problemas.push(`${id}: portão ${e.id} espera "${e.flag}", que ninguém liga`);
+        if (e.t === 'friend' && e.needsFlag && !produzidas.has(e.needsFlag))
+          problemas.push(`${id}: ${e.id} só fala com "${e.needsFlag}", que ninguém liga`);
+      }
+    }
+    expect(problemas).toEqual([]);
+  });
+
+  it('todo item de missão pedido por um amigo existe na fase, na quantidade pedida', async () => {
+    const problemas: string[] = [];
+    for (const [id, load] of LAYOUTS) {
+      const layout = await load();
+      for (const e of layout.entities) {
+        if (e.t !== 'friend') continue;
+        for (const q of [e.quest, e.quest2]) {
+          if (!q) continue;
+          if (q.type === 'collect') {
+            const itens = layout.entities.filter((x) => x.t === 'questItem' && x.group === q.group).length;
+            if (itens < q.count) problemas.push(`${id}: ${e.id} pede ${q.count} de "${q.group}", mas a fase só tem ${itens}`);
+          } else {
+            const pads = layout.entities.filter((x) => x.t === 'pad' && x.group === q.group).length;
+            if (pads === 0) problemas.push(`${id}: ${e.id} pede botões de "${q.group}", que não existem`);
+          }
+        }
+      }
+    }
+    expect(problemas).toEqual([]);
+  });
+});

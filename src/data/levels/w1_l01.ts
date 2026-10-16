@@ -299,10 +299,12 @@ wallX(12, 156, 190, 0, H, WALL2);
 add(
   { t: 'checkpoint', id: 'cp5', pos: [-3, 0, 158.5] },
   { t: 'trampoline', pos: [-5, 0.4, 164], radius: 1.5 },
-  { t: 'trampoline', pos: [0, 0.4, 172.4], radius: 1.8 },
+  // Perto da borda da plataforma da chegada (z 175): com o trampolim a 2,6 m dali, o
+  // quique não dava para alcançar a plataforma (medido). Mesmo ajuste feito na A01.
+  { t: 'trampoline', pos: [0, 0.4, 173], radius: 1.7 },
   { t: 'trampoline', pos: [5, 0.4, 164], radius: 1.5 },
   { t: 'coinLine', from: [-5, 3, 164], to: [-5, 9, 164], count: 4 },
-  { t: 'coinLine', from: [0, 3.5, 172.4], to: [0, 9.5, 172.4], count: 4 },
+  { t: 'coinLine', from: [0, 3.5, 173], to: [0, 9.5, 173], count: 4 },
   { t: 'gem', pos: [5, 8, 164] },
   { t: 'gem', pos: [5, 10, 164] },
   // Plataforma da chegada: ocupa a sala INTEIRA de parede a parede.
