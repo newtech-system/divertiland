@@ -100,7 +100,7 @@ add({
   id: 'mm_bemvindo',
   min: [-3.5, 0, -24],
   max: [3.5, 3, -18],
-  text: 'Este terreno é seu! Hoje dá para explorar e pular. Construir, decorar e visitar amigos chega nas próximas atualizações.',
+  text: 'Este terreno é seu! Hoje dá para explorar e pular. Construir chega em breve.',
   icon: '🏡',
   mission: 'Explore o seu mundo',
   tutorial: true,

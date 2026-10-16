@@ -30,6 +30,24 @@ export class HudScreen extends Screen implements HudApi {
   private speechTimer: ReturnType<typeof setTimeout> | null = null;
   private objectives: { icon: string; label: string; done: boolean }[] = [];
   private rotateHint: HTMLElement | null = null;
+  private replayBtn!: HTMLElement;
+  private helpBtn!: HTMLElement;
+  private onHelp: (() => void) | null = null;
+
+  /** Botão "me ajuda" sempre à mão no estilo assistido. */
+  setHelp(onHelp: (() => void) | null) {
+    this.onHelp = onHelp;
+    if (this.helpBtn) this.helpBtn.style.display = onHelp ? '' : 'none';
+  }
+  /** Última fala, para o botão "ouvir de novo" (repetir nunca gasta dica). */
+  private lastSpeech: { speaker: CharacterId | null; name?: string; icon?: string; text: string } | null = null;
+
+  private repeatSpeech() {
+    const s = this.lastSpeech;
+    if (!s) return;
+    if (s.speaker) this.say(s.speaker, s.text);
+    else this.sayAs(s.name ?? '', s.icon ?? '💬', s.text);
+  }
 
   constructor(
     game: GameManager,
@@ -54,12 +72,30 @@ export class HudScreen extends Screen implements HudApi {
     this.fadeEl = h('div', { class: 'fade' });
     this.touchSlot = h('div', { style: 'position:absolute;inset:0;pointer-events:none' });
     const pause = btn(g, null, { icon: '⏸', cls: 'round white', aria: 'Pausar', onClick: () => g.openPause() });
+    // Repetir a fala: a legenda não é mais clicável (não pode roubar o gesto de andar),
+    // então o botão de ouvir de novo fica aqui, no alto, fora da área de jogo.
+    this.replayBtn = btn(g, null, {
+      icon: '🔊',
+      cls: 'round white',
+      aria: 'Ouvir de novo',
+      onClick: () => this.repeatSpeech(),
+    });
+    this.replayBtn.style.display = 'none';
+    this.helpBtn = btn(g, null, {
+      icon: '🤝',
+      cls: 'round white',
+      aria: 'Pedir ajuda',
+      onClick: () => this.onHelp?.(),
+    });
+    this.helpBtn.style.display = this.onHelp ? '' : 'none';
     const top = h(
       'div',
       { class: 'hud-top' },
       h('div', { class: 'hud-left' }, this.coinsPill, this.objsEl),
       this.missionEl,
       this.timerEl,
+      this.helpBtn,
+      this.replayBtn,
       pause,
     );
     this.panelSlot = h('div', { class: 'hud-panel' });
@@ -88,7 +124,7 @@ export class HudScreen extends Screen implements HudApi {
   private checkOrientation = () => {
     const portraitPhone = this.useTouch() && this.controlsMode !== 'pointer' && window.innerHeight > window.innerWidth * 1.15;
     if (portraitPhone && !this.rotateHint) {
-      this.rotateHint = h('div', { class: 'rotate-hint' }, '📱↻', h('br'), 'Vire o celular de lado para jogar melhor!');
+      this.rotateHint = h('div', { class: 'rotate-hint' }, '📱↻ de lado fica melhor');
       this.el.append(this.rotateHint);
       setTimeout(() => {
         this.rotateHint?.remove();
@@ -186,9 +222,16 @@ export class HudScreen extends Screen implements HudApi {
   say(speaker: CharacterId, text: string, icon?: string) {
     if (!this.speechSlot) return;
     if (this.speechTimer) clearTimeout(this.speechTimer);
+    this.lastSpeech = { speaker, text };
     const sp = speech(this.game, speaker, text, icon);
     this.speechSlot.replaceChildren(sp);
+    this.showReplay();
     this.speechTimer = setTimeout(() => sp.remove(), Math.max(4200, text.length * 85 + 2000));
+  }
+
+  /** O botao de ouvir de novo so aparece depois da primeira fala da fase. */
+  private showReplay() {
+    if (this.replayBtn) this.replayBtn.style.display = '';
   }
 
   sayAs(name: string, portraitIcon: string, text: string) {
@@ -200,9 +243,10 @@ export class HudScreen extends Screen implements HudApi {
       h('span', { class: 'portrait', style: 'background:radial-gradient(circle at 50% 35%,#fff,#ffd6ec)' }, portraitIcon),
       h('div', { class: 'bubble' }, h('span', { class: 'who' }, name), text),
     );
-    sp.addEventListener('click', () => this.game.speak(text));
+    this.lastSpeech = { speaker: null, name, icon: portraitIcon, text };
     this.game.speak(text);
     this.speechSlot.replaceChildren(sp);
+    this.showReplay();
     this.speechTimer = setTimeout(() => sp.remove(), Math.max(4500, text.length * 85 + 2200));
   }
 

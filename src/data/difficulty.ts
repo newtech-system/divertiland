@@ -28,6 +28,19 @@ export interface DifficultyParams {
   knockbackMul: number;
   /** Multiplicador de recompensa em Divertis. */
   rewardMul: number;
+  /**
+   * CÂMERA AUTOMÁTICA (seção 6 da revisão de 16/10): a câmera se coloca atrás sozinha,
+   * para a criança não precisar de um segundo dedo para girar a vista. A direção do
+   * comando continua travada enquanto ela segura o joystick (B06), então a câmera girar
+   * nunca troca "frente" por "trás" no meio do caminho.
+   */
+  autoCamera: boolean;
+  /** Raio (m) para pegar colecionáveis/objetos de missão (coleta generosa). */
+  pickupRadius: number;
+  /** Segura na beirada: andar até o fim do apoio não derruba sem querer. */
+  edgeProtection: boolean;
+  /** Tentativas sem progresso antes de oferecer "Vamos juntos?". */
+  helpAfterTries: number;
   /** Velocidade base do modo corrida (runner), em m/s. */
   runnerSpeed: number;
   /** Aceleração do runner ao longo da fase (m/s por segundo). */
@@ -57,7 +70,7 @@ export const DIFFICULTIES: Record<DifficultyId, DifficultyDef> = {
       playerSpeedMul: 1.0,
       obstacleSpeedMul: 0.55,
       platformScale: 1.3,
-      coinMagnetRadius: 2.4,
+      coinMagnetRadius: 3.2,
       hintLevel: 2,
       timeMul: 1.6,
       extraCheckpoints: true,
@@ -65,6 +78,10 @@ export const DIFFICULTIES: Record<DifficultyId, DifficultyDef> = {
       respawnDelay: 0.35,
       knockbackMul: 0.6,
       rewardMul: 1.0,
+      autoCamera: true,
+      pickupRadius: 1.7,
+      edgeProtection: true,
+      helpAfterTries: 2,
       runnerSpeed: 8,
       runnerAccel: 0.05,
     },
@@ -88,6 +105,10 @@ export const DIFFICULTIES: Record<DifficultyId, DifficultyDef> = {
       respawnDelay: 0.45,
       knockbackMul: 1.0,
       rewardMul: 1.1,
+      autoCamera: false,
+      pickupRadius: 1.1,
+      edgeProtection: false,
+      helpAfterTries: 4,
       runnerSpeed: 11,
       runnerAccel: 0.12,
     },
@@ -113,6 +134,10 @@ export const DIFFICULTIES: Record<DifficultyId, DifficultyDef> = {
       respawnDelay: 0.5,
       knockbackMul: 1.25,
       rewardMul: 1.25,
+      autoCamera: false,
+      pickupRadius: 1.1,
+      edgeProtection: false,
+      helpAfterTries: 5,
       runnerSpeed: 14,
       runnerAccel: 0.2,
     },

@@ -101,7 +101,11 @@ export class Exploration3DLevel implements LevelRuntime {
       pos: { x: layout.spawn.pos[0], y: layout.spawn.pos[1], z: layout.spawn.pos[2] },
       yaw: layout.spawn.yaw,
     });
-    this.collect = new CollectibleSystem(this.lvl, h.params.coinMagnetRadius);
+    this.collect = new CollectibleSystem(this.lvl, h.params.coinMagnetRadius, h.params.pickupRadius);
+    // Câmera automática no estilo assistido: ninguém precisa de um segundo dedo.
+    this.cam.assist = h.params.autoCamera;
+    // Ajuda sempre à mão (não exige falhar antes).
+    if (h.params.hintLevel >= 2) h.hud.setHelp(() => void this.askHelp(true));
     this.completeOn = layout.completeOn ?? 'finish';
     this.quests = new QuestSystem(
       this.lvl,
@@ -413,6 +417,7 @@ export class Exploration3DLevel implements LevelRuntime {
   private stuckAt: V3 | null = null;
   private stuckT = 0;
   private autoJumpCooldown = 0;
+  private edgeWarnAt = -99;
 
   /**
    * ASSISTÊNCIA DE CONTROLE — separada da complexidade da missão (seção 6).
@@ -435,6 +440,21 @@ export class Exploration3DLevel implements LevelRuntime {
         intent.jumpPressed = true;
         intent.jumpHeld = true;
         this.autoJumpCooldown = 0.5;
+      }
+    }
+
+    // --- PROTEÇÃO DE BORDA (seção 6): no estilo assistido, andar até o fim de um apoio
+    // não derruba sem querer. Só segura quando NÃO existe lugar para pousar à frente —
+    // quem quer pular continua pulando normalmente.
+    if (this.host.params.edgeProtection && b.grounded && !intent.jumpPressed && !this.side) {
+      const mag = Math.hypot(intent.x, intent.z);
+      if (mag > 0.3 && this.noGroundAhead(intent, 0.55) && !this.landingAhead(intent)) {
+        intent.x = 0;
+        intent.z = 0;
+        if (this.t - this.edgeWarnAt > 6) {
+          this.edgeWarnAt = this.t;
+          this.host.hud.toast('🛑', 'Cuidado, aqui acaba o caminho!');
+        }
       }
     }
 
@@ -486,10 +506,19 @@ export class Exploration3DLevel implements LevelRuntime {
    * Aceitando, o guia leva a criança de mão até o próximo ponto seguro: escurece a tela,
    * coloca ela lá e só então diz "Chegamos" — nunca anuncia uma chegada que não houve.
    */
+  /** Pedido de ajuda pelo botão: oferece na hora, sem esperar falhar. */
+  private async askHelp(agora: boolean) {
+    if (agora) {
+      this.assistFalls = this.host.params.helpAfterTries;
+      this.assistAskedAt = -99;
+      this.assistLedTo = null;
+    }
+    await this.maybeOfferHelp();
+  }
+
   private async maybeOfferHelp() {
     if (this.autoRoute) return; // piloto automático de teste não responde perguntas
-    const sloth = this.host.params.hintLevel >= 2;
-    const limit = sloth ? 3 : 6;
+    const limit = this.host.params.helpAfterTries;
     const cpId = this.checkpoints.respawnId();
     if (this.assistLedTo === cpId) return;
     if (this.assistFalls < limit || this.t - this.assistAskedAt < 25) return;

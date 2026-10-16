@@ -113,7 +113,7 @@ const targets: HiddenTarget[] = [
 export const HIDDEN_W1_L02: HiddenRoomData = {
   id: 'w1_l02',
   music: 'world1',
-  intro: 'Eu perdi umas coisas aqui na sala de brinquedos! Vamos encontrar? Arraste para olhar em volta e toque no que achar!',
+  intro: 'Perdi umas coisas aqui! Arraste para olhar e toque no que achar.',
   background: '#efe4ff',
   room: {
     radius: 9.6,

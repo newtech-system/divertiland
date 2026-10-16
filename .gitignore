@@ -3,3 +3,6 @@ dist
 *.log
 .DS_Store
 .claude/
+
+# Pacote de referências recebido da proprietária (imagens pesadas, consulta local)
+Divertiland_Prompt_e_Referencias_16-10-2026/

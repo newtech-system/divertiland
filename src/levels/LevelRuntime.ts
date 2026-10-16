@@ -33,6 +33,11 @@ export interface HudApi {
    * Enquanto está aberta o desafio fica parado. Devolve true se a criança aceitou.
    */
   offer(speaker: CharacterId, text: string, yes: { icon: string; label: string }, no: { icon: string; label: string }): Promise<boolean>;
+  /**
+   * Botão de ajuda SEMPRE disponível (seção 6 da revisão de 16/10: "ajuda sempre
+   * disponível, sem exigir duas falhas"). `null` esconde o botão.
+   */
+  setHelp(onHelp: (() => void) | null): void;
 }
 
 export interface LevelHost {

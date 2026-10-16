@@ -26,6 +26,8 @@ export class CollectibleSystem {
   constructor(
     private lvl: BuiltLevel,
     private magnetRadius: number,
+    /** Raio para colecionáveis: maior no estilo assistido (coleta generosa). */
+    private pickupRadius = 1.1,
   ) {}
 
   get total() {
@@ -92,7 +94,7 @@ export class CollectibleSystem {
 
     for (const col of this.lvl.collectibles) {
       if (col.taken) continue;
-      if (col.obj.position.distanceTo(center) < 1.1) {
+      if (col.obj.position.distanceTo(center) < this.pickupRadius) {
         col.taken = true;
         col.obj.visible = false;
         this.collectiblesFound.push(col.id);
