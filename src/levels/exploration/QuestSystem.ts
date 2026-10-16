@@ -98,9 +98,9 @@ export class QuestSystem {
     const d = f.def;
     const phase = this.friendPhase.get(d.id) ?? 0;
     if (phase === 1 && d.quest2) {
-      return { quest: d.quest2, intro: d.intro2 ?? d.intro, mission: d.mission2, thanks: d.thanks2 ?? d.thanks, hint: d.hint2, stage: d.stage2 };
+      return { quest: d.quest2, intro: d.intro2 ?? d.intro, mission: d.mission2, thanks: d.thanks2 ?? d.thanks, hint: d.hint2, where: d.where2, stage: d.stage2 };
     }
-    return { quest: d.quest, intro: d.intro, mission: d.mission, thanks: d.thanks, hint: d.hint, stage: d.stage };
+    return { quest: d.quest, intro: d.intro, mission: d.mission, thanks: d.thanks, hint: d.hint, where: d.where, stage: d.stage };
   }
 
   private talk(f: FriendInfo) {
@@ -134,9 +134,16 @@ export class QuestSystem {
       if (ph.mission) h.mission(ph.mission);
       if (ph.quest.type === 'pads' && ph.quest.memory) this.startMemory(ph.quest.group);
       h.audio.play('pop');
-      // A criança pode ter pegado os objetos ANTES de conversar. Sem esta verificação o
-      // amigo ficava esperando para sempre e a missão travava (o portão nunca abria).
-      this.alreadyDone(ph.quest);
+      // A criança pode ter pegado os objetos ANTES de conversar — e é o que acontece
+      // naturalmente, porque eles ficam no caminho. Antes, o amigo pedia o que ela já
+      // tinha e ficava esperando: a porta nunca abria. Agora ele recebe na hora, com
+      // uma pausa curta para a criança ler o pedido antes do agradecimento.
+      if (this.isComplete(ph.quest)) {
+        this.questReady(ph.quest.group, true);
+        setTimeout(() => {
+          if (this.friendState.get(d.id) === 'ready') this.deliver(f);
+        }, 2200);
+      }
       return;
     }
     if (st === 'active') {
@@ -147,31 +154,44 @@ export class QuestSystem {
       const partes = [ph.mission ? `${ph.mission}!` : 'Você consegue!'];
       const falta = this.missingText(ph.quest);
       if (falta) partes.push(falta);
-      if (ph.hint) partes.push(ph.hint);
+      if (ph.where) partes.push(ph.where);
       h.say(d.name, d.icon, partes.join(' '));
       return;
     }
     if (st === 'ready') {
-      this.friendDone(f);
-      this.flags.add(ph.quest.flag);
-      if (ph.stage) h.stageDone(ph.stage);
-      h.say(d.name, d.icon, `${ph.thanks}${ph.hint ? ' ' + ph.hint : ''}`);
-      h.audio.play('star');
-      h.reward(10);
-      h.toast('💛', `Você ajudou ${d.name}!`);
-      const p = f.obj.position;
-      h.particles.emit({ x: p.x, y: p.y + 2, z: p.z }, 40, { colors: [...FX_COLORS.confetti], speed: 5, life: 1.2, size: 0.3 });
-      this.openGates();
-      if (this.helpedEveryone) this.flags.add('helpedEveryone');
-      // A história continua: o mesmo amigo pode pedir a segunda coisa.
-      if ((this.friendPhase.get(d.id) ?? 0) === 0 && d.quest2) {
-        this.friendPhase.set(d.id, 1);
-        this.friendState.set(d.id, 'new');
-        this.friendBubble(f, '❗');
-      }
+      this.deliver(f);
       return;
     }
     h.say(d.name, d.icon, ph.hint ?? ph.thanks);
+  }
+
+  /**
+   * A ENTREGA: o amigo agradece, a flag liga e o portão abre. É o único lugar que liga a
+   * flag da missão — tanto quando a criança volta para falar quanto quando ela já chega
+   * com tudo na mão.
+   */
+  private deliver(f: FriendInfo) {
+    const d = f.def;
+    const h = this.hooks;
+    const ph = this.phaseOf(f);
+    if (!ph.quest || this.friendState.get(d.id) === 'done') return;
+    this.friendDone(f);
+    this.flags.add(ph.quest.flag);
+    if (ph.stage) h.stageDone(ph.stage);
+    h.say(d.name, d.icon, `${ph.thanks}${ph.hint ? ' ' + ph.hint : ''}`);
+    h.audio.play('star');
+    h.reward(10);
+    h.toast('💛', `Você ajudou ${d.name}!`);
+    const p = f.obj.position;
+    h.particles.emit({ x: p.x, y: p.y + 2, z: p.z }, 40, { colors: [...FX_COLORS.confetti], speed: 5, life: 1.2, size: 0.3 });
+    this.openGates();
+    if (this.helpedEveryone) this.flags.add('helpedEveryone');
+    // A história continua: o mesmo amigo pode pedir a segunda coisa.
+    if ((this.friendPhase.get(d.id) ?? 0) === 0 && d.quest2) {
+      this.friendPhase.set(d.id, 1);
+      this.friendState.set(d.id, 'new');
+      this.friendBubble(f, '❗');
+    }
   }
 
   /** "Falta 1 de 2" — o que ainda não foi feito, em linguagem de criança. */
@@ -188,17 +208,15 @@ export class QuestSystem {
     return falta === 1 ? 'Falta 1 botão.' : `Faltam ${falta} botões.`;
   }
 
-  /** A missão que acabou de começar já está cumprida? Então já pode agradecer. */
-  private alreadyDone(quest: QuestDef): void {
-    const group = quest.group;
+  /** A missão já está cumprida (a criança pegou tudo antes de conversar)? */
+  private isComplete(quest: QuestDef): boolean {
     if (quest.type === 'collect') {
-      const got = this.lvl.questItems.filter((q) => q.def.group === group && q.taken).length;
-      if (got >= quest.count) this.questReady(group);
-      return;
+      const got = this.lvl.questItems.filter((q) => q.def.group === quest.group && q.taken).length;
+      return got >= quest.count;
     }
-    if (quest.memory) return; // sequência de memória sempre começa de novo
-    const pads = this.lvl.pads.filter((p) => p.def.group === group);
-    if (pads.length > 0 && pads.every((p) => p.lit)) this.questReady(group);
+    if (quest.memory) return false; // sequência de memória sempre começa de novo
+    const pads = this.lvl.pads.filter((p) => p.def.group === quest.group);
+    return pads.length > 0 && pads.every((p) => p.lit);
   }
 
   private friendBubble(f: FriendInfo, icon: string) {
@@ -212,11 +230,12 @@ export class QuestSystem {
   }
 
   /** Missão cumprida → o amigo fica esperando para agradecer. */
-  private questReady(group: string) {
+  private questReady(group: string, silencioso = false) {
     for (const f of this.lvl.friends) {
       const q = this.phaseOf(f).quest;
       if (!q || q.group !== group || this.friendState.get(f.def.id) !== 'active') continue;
       this.friendState.set(f.def.id, 'ready');
+      if (silencioso) continue; // a entrega acontece em seguida: não mandar "volte e fale"
       this.hooks.audio.play('unlock');
       this.hooks.toast(f.def.icon, `Volte e fale com ${f.def.name}!`);
       this.hooks.mission(`Volte e fale com ${f.def.name}`);
@@ -265,7 +284,16 @@ export class QuestSystem {
   private onPad(pad: PadInfo) {
     const g = pad.def.group;
     const quest = this.lvl.friends.map((f) => this.phaseOf(f).quest).find((q) => q?.group === g);
-    if (!quest || quest.type !== 'pads' || !this.activeGroup(g)) {
+    // Botão de missão acende SEMPRE (menos na sequência de memória, que precisa ser
+    // repetida na ordem). Antes ele só acendia depois de a criança conversar com o
+    // amigo: quem pisava em tudo antes achava que tinha feito, e nada acontecia.
+    const soNaSequencia = !quest || quest.type !== 'pads' || quest.memory;
+    if (soNaSequencia && !this.activeGroup(g)) {
+      pad.glow = 1;
+      this.hooks.audio.play('note', { pitch: 0.9 + (pad.def.order ?? 0) * 0.15 });
+      return;
+    }
+    if (!quest || quest.type !== 'pads') {
       pad.glow = 1;
       this.hooks.audio.play('note', { pitch: 0.9 + (pad.def.order ?? 0) * 0.15 });
       return;
@@ -415,18 +443,31 @@ export class QuestSystem {
    * Guarda o que não pode se perder ao sair no meio: as flags (portões já abertos,
    * entregas já feitas) e em que ponto da conversa cada amigo está.
    */
-  saveState(): { flags: string[]; friends: string[] } {
+  saveState(): { flags: string[]; friends: string[]; items: string[]; pads: string[] } {
     const friends: string[] = [];
     for (const [id, st] of this.friendState) friends.push(`${id}:${st}:${this.friendPhase.get(id) ?? 0}`);
-    return { flags: [...this.flags], friends };
+    return {
+      flags: [...this.flags],
+      friends,
+      // O que a criança já pegou/acendeu continua pego ao voltar: antes isso se perdia e
+      // ela tinha de refazer a coleta sem entender por quê.
+      items: this.lvl.questItems.filter((q) => q.taken).map((q) => q.def.id),
+      pads: this.lvl.pads.filter((p) => p.lit).map((p) => p.def.id),
+    };
   }
 
   /**
-   * Retoma uma partida salva. Os objetos de missão da missão ATUAL voltam ao lugar
-   * (recomeçar uma coleta pela metade é justo); o que já foi entregue continua entregue.
+   * Retoma uma partida salva: flags, estado de cada amigo e **o que já foi pego**
+   * (objetos de missão e botões acesos). Nada do que a criança já fez se perde.
    */
-  restore(flags: string[], friends: string[]): void {
+  restore(flags: string[], friends: string[], items: string[] = [], pads: string[] = []): void {
     for (const f of flags) this.flags.add(f);
+    for (const it of this.lvl.questItems) {
+      if (!items.includes(it.def.id)) continue;
+      it.taken = true;
+      it.obj.visible = false;
+    }
+    for (const p of this.lvl.pads) if (pads.includes(p.def.id)) p.lit = true;
     for (const entry of friends) {
       const [id, st, phase] = entry.split(':');
       const f = this.lvl.friends.find((x) => x.def.id === id);
@@ -440,6 +481,15 @@ export class QuestSystem {
       this.friendState.set(id, state);
       if (state === 'done') this.friendBubble(f, '💛');
       else if (state === 'ready' || (state === 'new' && ph === 1)) this.friendBubble(f, '❗');
+    }
+    // Quem estava no meio da missão e já tem tudo volta pronto para agradecer.
+    for (const f of this.lvl.friends) {
+      const q = this.phaseOf(f).quest;
+      if (!q || this.friendState.get(f.def.id) !== 'active') continue;
+      if (this.isComplete(q)) {
+        this.friendState.set(f.def.id, 'ready');
+        this.friendBubble(f, '❗');
+      }
     }
     this.openGates();
   }

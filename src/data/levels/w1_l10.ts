@@ -68,6 +68,7 @@ add(
     intro: 'Olá! Para abrir a porta, pise nos botões na MESMA ordem em que eles acenderem. Olhe bem!',
     mission: 'Repita a sequência de luzes pisando nos botões',
     quest: { type: 'pads', group: 'mem', flag: 'memDoor', memory: true },
+    where: 'Os botões coloridos estão bem aqui na minha frente. Fale comigo que eu mostro a sequência de novo.',
     thanks: 'Memória de campeão! A porta abriu!',
     hint: 'Se esquecer, fale comigo de novo que eu mostro outra vez.',
   },

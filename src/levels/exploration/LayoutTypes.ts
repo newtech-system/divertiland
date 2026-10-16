@@ -72,7 +72,10 @@ export type LayoutEntity = Base &
         /** Texto da missão no HUD enquanto ela está ativa. */
         mission?: string;
         thanks: string;
+        /** Dito DEPOIS de ajudar (continuação da história). */
         hint?: string;
+        /** Dito ENQUANTO a missão está em andamento: onde procurar. */
+        where?: string;
         /**
          * SEGUNDA parte da missão do mesmo amigo: a história continua depois do primeiro
          * obrigado (ex.: a criança primeiro pede as pistas, depois pede o ursinho).
@@ -82,6 +85,7 @@ export type LayoutEntity = Base &
         mission2?: string;
         thanks2?: string;
         hint2?: string;
+        where2?: string;
         /** Etapa concluída já ao OUVIR este amigo pela primeira vez (acolher alguém). */
         stageMeet?: string;
         /** Etapa concluída quando a primeira missão deste amigo termina. */

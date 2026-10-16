@@ -203,6 +203,8 @@ function sanitizeInProgress(v: unknown): InProgressRun | null {
     stagesDone: strArray(v.stagesDone),
     questFlags: strArray(v.questFlags),
     questFriends: strArray(v.questFriends),
+    questItemsTaken: strArray(v.questItemsTaken),
+    questPadsLit: strArray(v.questPadsLit),
   };
 }
 

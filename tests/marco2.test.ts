@@ -409,12 +409,13 @@ describe('Ninguém fica sem saber onde procurar (relato da proprietária, 16/10)
     for (const [nome, layout] of LAYOUTS) {
       for (const e of layout.entities) {
         if (e.t !== 'friend' || !e.quest) continue;
-        expect([nome, e.id, typeof e.hint]).toEqual([nome, e.id, 'string']);
-        expect([nome, e.id, (e.hint ?? '').length > 10]).toEqual([nome, e.id, true]);
+        // `where` é o que diz ONDE procurar enquanto a missão está em andamento.
+        expect([nome, e.id, typeof e.where]).toEqual([nome, e.id, 'string']);
+        expect([nome, e.id, (e.where ?? '').length > 10]).toEqual([nome, e.id, true]);
         // e a missão do HUD também precisa existir, porque fica sempre na tela
         expect([nome, e.id, typeof e.mission]).toEqual([nome, e.id, 'string']);
         if (e.quest2) {
-          expect([nome, e.id, typeof e.hint2]).toEqual([nome, e.id, 'string']);
+          expect([nome, e.id, typeof e.where2]).toEqual([nome, e.id, 'string']);
           expect([nome, e.id, typeof e.mission2]).toEqual([nome, e.id, 'string']);
         }
       }

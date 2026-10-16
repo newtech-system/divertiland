@@ -85,6 +85,10 @@ export interface InProgressRun {
   questFlags?: string[];
   /** Estado de cada amigo, no formato "id:estado:fase". */
   questFriends?: string[];
+  /** Objetos de missão já pegos (não voltam ao lugar ao continuar). */
+  questItemsTaken?: string[];
+  /** Botões de chão já acesos. */
+  questPadsLit?: string[];
 }
 
 export interface ProfileData {

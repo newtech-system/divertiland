@@ -136,7 +136,7 @@ export class Exploration3DLevel implements LevelRuntime {
       // Etapas e missões: sem isto, continuar uma aventura podia deixar a criança atrás
       // de um portão que ela já havia aberto (ou refazendo a história inteira).
       this.stagesDone = [...(r.stagesDone ?? [])];
-      this.quests.restore(r.questFlags ?? [], r.questFriends ?? []);
+      this.quests.restore(r.questFlags ?? [], r.questFriends ?? [], r.questItemsTaken ?? [], r.questPadsLit ?? []);
       log.info(`Continuando do checkpoint ${r.checkpointId ?? 'início'}`);
     }
     const sp = this.checkpoints.respawnPoint();
@@ -859,6 +859,7 @@ export class Exploration3DLevel implements LevelRuntime {
 
   snapshot(): InProgressRun | null {
     if (this.finished) return null;
+    const q = this.quests?.saveState();
     return {
       levelId: this.host.level.id,
       difficulty: this.host.difficulty,
@@ -869,8 +870,10 @@ export class Exploration3DLevel implements LevelRuntime {
       elapsedSec: this.elapsed,
       savedAt: Date.now(),
       stagesDone: [...this.stagesDone],
-      questFlags: this.quests?.saveState().flags ?? [],
-      questFriends: this.quests?.saveState().friends ?? [],
+      questFlags: q?.flags ?? [],
+      questFriends: q?.friends ?? [],
+      questItemsTaken: q?.items ?? [],
+      questPadsLit: q?.pads ?? [],
     };
   }
 
