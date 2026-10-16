@@ -75,13 +75,17 @@ const S = { type: 'shop' } as const;
 
 export const ITEMS: ItemDef[] = [
   // ---------- Itens padrão (sempre possuídos) ----------
-  { id: 'skin_orange', name: 'Pelagem Laranja', icon: '🐻', slot: 'skin', category: 'special', price: 0, acquire: D, visual: { kind: 'fur', colors: ['#ff8a1f', '#ffd2a1'] } },
-  { id: 'top_jhow_hoodie', name: 'Moletom do Jhow', icon: '🧥', slot: 'top', category: 'clothes', price: 0, acquire: D, characters: ['jhow'], visual: { kind: 'hoodie', colors: ['#2e8cff', '#2fe0a0', '#8b3cff', '#ffffff'] } },
+  // Cores conferidas na prancha oficial: pelo laranja quente e focinho/mãos em tom claro.
+  { id: 'skin_orange', name: 'Pelagem Laranja', icon: '🐻', slot: 'skin', category: 'special', price: 0, acquire: D, visual: { kind: 'fur', colors: ['#e8872c', '#f6cd96'] } },
+  // Jaqueta do Jhow: degradê turquesa → verde-limão com acabamentos roxos (prancha).
+  { id: 'top_jhow_hoodie', name: 'Jaqueta do Jhow', icon: '🧥', slot: 'top', category: 'clothes', price: 0, acquire: D, characters: ['jhow'], visual: { kind: 'hoodie', colors: ['#2bc7e8', '#93e02b', '#7b3fc4', '#ffffff'] } },
   { id: 'bottom_cargo_black', name: 'Shorts Cargo', icon: '🩳', slot: 'bottom', category: 'clothes', price: 0, acquire: D, visual: { kind: 'shorts', colors: ['#24242c'] } },
   { id: 'feet_turquoise', name: 'Tênis Turquesa', icon: '👟', slot: 'feet', category: 'clothes', price: 0, acquire: D, visual: { kind: 'sneakers', colors: ['#1fd6c9', '#ffffff'] } },
   { id: 'ears_headphones_black', name: 'Headphone Preto', icon: '🎧', slot: 'ears', category: 'accessories', price: 0, acquire: D, visual: { kind: 'headphones', colors: ['#1d1d24', '#8b3cff'] } },
-  { id: 'top_mina_outfit', name: 'Roupa da Mina', icon: '👚', slot: 'top', category: 'clothes', price: 0, acquire: D, characters: ['mina'], visual: { kind: 'hoodie', colors: ['#ff4fae', '#a14dff', '#ffd1ec', '#ffffff'] } },
-  { id: 'bottom_mina_skirt', name: 'Saia Roxa', icon: '👗', slot: 'bottom', category: 'clothes', price: 0, acquire: D, visual: { kind: 'skirt', colors: ['#8b3cff'] } },
+  // Colete da Mina: rosa → magenta com acabamento roxo, sobre camiseta branca (prancha).
+  { id: 'top_mina_outfit', name: 'Colete da Mina', icon: '👚', slot: 'top', category: 'clothes', price: 0, acquire: D, characters: ['mina'], visual: { kind: 'hoodie', colors: ['#ff4fa3', '#c04fd8', '#7b3fc4', '#ffffff'] } },
+  // Saia pregueada rosa → roxo (prancha). A miniatura da loja usa saia, não vestido.
+  { id: 'bottom_mina_skirt', name: 'Saia Pregueada', icon: '👗', slot: 'bottom', category: 'clothes', price: 0, acquire: D, visual: { kind: 'skirt', colors: ['#ff4fa3', '#a14dd8'] } },
   { id: 'feet_pink', name: 'Tênis Rosa', icon: '👟', slot: 'feet', category: 'clothes', price: 0, acquire: D, visual: { kind: 'sneakers', colors: ['#ff5cb8', '#ffffff'] } },
   { id: 'head_visor_white', name: 'Viseira Branca', icon: '🧢', slot: 'head', category: 'accessories', price: 0, acquire: D, visual: { kind: 'visor', colors: ['#ffffff', '#ff4fae'] } },
 

@@ -112,6 +112,119 @@ export function verticalGradient(geo: THREE.BufferGeometry, bottom: string, top:
 const texCache = new Map<string, THREE.Texture>();
 
 /** Textura de texto/letreiro desenhada em canvas (placeholder até existir a arte real). */
+/**
+ * MURAL DO PARQUE (foto 03_parque/01): as paredes da Divertiland são pretas com pintura
+ * de galáxia — estrelas, planetas e um astronauta — além de grafismos fluorescentes.
+ * A textura é desenhada em canvas, então não depende de arquivo de imagem.
+ */
+export function muralTexture(kind: 'espaco' | 'neon' = 'espaco', seed = 1): THREE.Texture {
+  const key = `mural:${kind}:${seed}`;
+  const cached = texCache.get(key);
+  if (cached) return cached;
+  const w = 1024;
+  const h = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  let s = seed * 9301 + 49297;
+  const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+
+  const fundo = ctx.createLinearGradient(0, 0, w, h);
+  fundo.addColorStop(0, '#0b0620');
+  fundo.addColorStop(0.5, '#1b1046');
+  fundo.addColorStop(1, '#0d0a2b');
+  ctx.fillStyle = fundo;
+  ctx.fillRect(0, 0, w, h);
+
+  if (kind === 'espaco') {
+    // nebulosa
+    for (let i = 0; i < 5; i++) {
+      const g = ctx.createRadialGradient(rnd() * w, rnd() * h, 10, rnd() * w, rnd() * h, 180 + rnd() * 160);
+      const cor = ['rgba(124,58,237,0.35)', 'rgba(37,99,235,0.3)', 'rgba(219,39,119,0.25)'][i % 3];
+      g.addColorStop(0, cor);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    // estrelas
+    for (let i = 0; i < 260; i++) {
+      const x = rnd() * w;
+      const y = rnd() * h;
+      const r = rnd() * 1.8 + 0.4;
+      ctx.globalAlpha = 0.4 + rnd() * 0.6;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // planeta com anel
+    const px = w * (0.18 + rnd() * 0.5);
+    const py = h * (0.3 + rnd() * 0.3);
+    const pr = 48 + rnd() * 26;
+    const pg = ctx.createRadialGradient(px - pr * 0.3, py - pr * 0.3, pr * 0.2, px, py, pr);
+    pg.addColorStop(0, '#ffd27a');
+    pg.addColorStop(1, '#e0712a');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.arc(px, py, pr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,214,122,0.75)';
+    ctx.lineWidth = 7;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(-0.35);
+    ctx.scale(1, 0.28);
+    ctx.beginPath();
+    ctx.arc(0, 0, pr * 1.75, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    // luazinha
+    ctx.fillStyle = '#cfd6ff';
+    ctx.beginPath();
+    ctx.arc(w * 0.82, h * 0.22, 26, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // respingos e carinha sorridente fluorescente
+    const cores = ['#39ff88', '#ff2d6f', '#2bc7e8', '#ffd60a'];
+    for (let i = 0; i < 16; i++) {
+      ctx.fillStyle = cores[i % cores.length];
+      ctx.globalAlpha = 0.85;
+      const x = rnd() * w;
+      const y = rnd() * h;
+      ctx.beginPath();
+      ctx.arc(x, y, 8 + rnd() * 26, 0, Math.PI * 2);
+      ctx.fill();
+      for (let k = 0; k < 5; k++) {
+        ctx.beginPath();
+        ctx.arc(x + (rnd() - 0.5) * 120, y + (rnd() - 0.5) * 120, 2 + rnd() * 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#39ff88';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(w * 0.5, h * 0.5, 90, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#39ff88';
+    ctx.beginPath();
+    ctx.arc(w * 0.46, h * 0.44, 12, 0, Math.PI * 2);
+    ctx.arc(w * 0.54, h * 0.44, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(w * 0.5, h * 0.52, 44, 0.2 * Math.PI, 0.8 * Math.PI);
+    ctx.stroke();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  texCache.set(key, tex);
+  return tex;
+}
+
 export function textTexture(
   text: string,
   opts: { color?: string; glow?: string; bg?: string; font?: number; width?: number; height?: number } = {},

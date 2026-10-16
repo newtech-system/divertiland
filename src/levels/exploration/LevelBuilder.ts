@@ -7,7 +7,7 @@ import type { DifficultyParams } from '../../data/difficulty';
 import { ProceduralAnimator } from '../../engine/character/AnimationController';
 import { CharacterModel } from '../../engine/character/CharacterModel';
 import { defaultLook } from '../../engine/character/looks';
-import { NEON_CYCLE, PALETTE, checkerTexture, netTexture, textTexture, toon } from '../../engine/materials';
+import { NEON_CYCLE, PALETTE, checkerTexture, netTexture, textTexture, toon, muralTexture } from '../../engine/materials';
 import { PhysicsWorld, makeBox, type Collider, type V3 } from '../../engine/physics/PhysicsWorld';
 import type { LayoutEntity, LevelLayout, Vec3 } from './LayoutTypes';
 import { makeProp } from '../../engine/props/Props';
@@ -1475,6 +1475,16 @@ export class LevelBuilder {
         stick.position.set(p.x, p.y + 0.55 * size, p.z);
         this.batch.add(star.geometry, star.material as THREE.Material, star.matrixWorld.clone().identity().makeRotationZ(0.12).setPosition(p.x, p.y, p.z));
         this.batch.add(stick.geometry, stick.material as THREE.Material, m4(p.x, p.y + 0.55 * size, p.z));
+        break;
+      }
+      case 'mural': {
+        // Pintura na parede (galáxia ou grafismo neon). `size` = largura em metros.
+        const larg = 8 * size;
+        const alt = larg * 0.5;
+        const tex = muralTexture(e.text === 'neon' ? 'neon' : 'espaco', Math.round(p.x + p.z));
+        const m = new THREE.Matrix4().makeRotationY(yaw);
+        m.setPosition(p.x, p.y, p.z);
+        this.batch.add(new THREE.PlaneGeometry(larg, alt), toon('#ffffff', { map: tex, unlit: true }), m);
         break;
       }
       case 'lightPanel': {

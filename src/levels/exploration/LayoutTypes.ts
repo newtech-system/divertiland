@@ -158,7 +158,7 @@ export type LayoutEntity = Base &
     | { t: 'sign'; pos: Vec3; yaw?: number; text: string; color?: string; w?: number; h?: number }
     | {
         t: 'decor';
-        kind: 'neonSign' | 'arch' | 'pillar' | 'balloons' | 'star' | 'lightPanel' | 'cushion' | 'ring' | 'stripe';
+        kind: 'neonSign' | 'arch' | 'pillar' | 'balloons' | 'star' | 'lightPanel' | 'cushion' | 'ring' | 'stripe' | 'mural';
         pos: Vec3;
         yaw?: number;
         color?: string;

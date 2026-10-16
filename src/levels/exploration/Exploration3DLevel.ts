@@ -965,14 +965,17 @@ export class Exploration3DLevel implements LevelRuntime {
   }
 
   dispose(): void {
-    this.model.dispose();
-    this.particles.dispose();
-    this.scene.traverse((o) => {
+    // Uma fase que falhou ao carregar fica pela metade. Descartar sem checagem jogava um
+    // erro NOVO aqui e escondia o erro de verdade — foi o que aconteceu ao estrear o
+    // mural. Agora o descarte e tolerante e o erro original aparece no console.
+    this.model?.dispose();
+    this.particles?.dispose();
+    this.scene?.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.geometry) m.geometry.dispose();
     });
-    for (const n of this.lvl.npcs) n.model.dispose();
-    this.scene.clear();
+    for (const n of this.lvl?.npcs ?? []) n.model.dispose();
+    this.scene?.clear();
   }
 
   // ------------------------------------------------------------------ ferramentas de dev

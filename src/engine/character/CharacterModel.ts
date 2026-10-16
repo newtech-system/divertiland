@@ -90,46 +90,97 @@ export class CharacterModel {
     mouth.position.set(0, 0.07, 0.395);
     mouth.rotation.z = Math.PI;
     bones.head.add(mouth);
+    // ---------------------------------------------------------------- rosto oficial
+    // Conferido com a prancha de referência (01_personagens/01.png): olho branco com
+    // pupila escura e brilho, sobrancelha marcada e ORELHA COM INTERIOR ROXO — esse
+    // roxo é marca dos dois mascotes, por isso não acompanha o item de pelagem.
     for (const side of [-1, 1]) {
       const eye = new THREE.Group();
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), toon('#1b1430'));
-      white.scale.set(0.85, 1.15, 0.6);
-      const shine = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), toon('#ffffff', { unlit: true }));
-      shine.position.set(0.015, 0.025, 0.03);
-      eye.add(white, shine);
-      eye.position.set(0.12 * side, 0.27, 0.3);
+      const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.078, 14, 12), toon('#ffffff'));
+      sclera.scale.set(0.88, 1.12, 0.5);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.046, 12, 10), toon('#1b1430'));
+      pupil.scale.set(0.95, 1.08, 0.7);
+      pupil.position.set(0, -0.005, 0.03);
+      const shine = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), toon('#ffffff', { unlit: true }));
+      shine.position.set(0.018, 0.028, 0.055);
+      eye.add(sclera, pupil, shine);
+      eye.position.set(0.125 * side, 0.27, 0.285);
       bones.head.add(eye);
       this.eyes.push(eye);
+
+      const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.013, 0.075, 3, 6), toon('#3a2216'));
+      brow.rotation.z = Math.PI / 2;
+      brow.rotation.y = 0.18 * side;
+      brow.position.set(0.13 * side, 0.375, 0.285);
+      bones.head.add(brow);
+
       const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), this.furMat());
       ear.scale.set(1, 1, 0.55);
       ear.position.set(0.25 * side, 0.47, -0.02);
       bones.head.add(ear);
-      const inner = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), this.furMat(true));
-      inner.scale.set(1, 1, 0.4);
-      inner.position.set(0.25 * side, 0.46, 0.03);
+      const inner = new THREE.Mesh(new THREE.SphereGeometry(0.058, 10, 8), toon('#9a4fd6'));
+      inner.scale.set(1, 1, 0.42);
+      inner.position.set(0.25 * side, 0.46, 0.035);
       bones.head.add(inner);
     }
+
+    if (this.character === 'jhow') {
+      // Topete assimétrico (prancha): três mechas inclinadas para um lado.
+      const tuft = new THREE.Group();
+      for (let i = 0; i < 3; i++) {
+        const mecha = new THREE.Mesh(new THREE.CapsuleGeometry(0.052 - i * 0.008, 0.1 + i * 0.02, 4, 8), this.furMat());
+        mecha.position.set(-0.05 + i * 0.055, 0.52 + i * 0.02, 0.12 - i * 0.02);
+        mecha.rotation.z = -0.5 + i * 0.12;
+        mecha.rotation.x = -0.35;
+        tuft.add(mecha);
+      }
+      bones.head.add(tuft);
+    }
+
     if (this.character === 'mina') {
-      // Tranças da Mina
+      // Cabelo castanho: franja sobre a testa + duas tranças com laço rosa.
+      const CABELO = '#8a4a22';
+      // Franja: so a faixa de cima da testa e as laterais — o rosto continua de pelo.
+      const franja = new THREE.Mesh(new THREE.SphereGeometry(0.352, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2), toon(CABELO));
+      franja.scale.set(1.02, 0.52, 0.96);
+      franja.position.set(0, 0.3, -0.015);
+      bones.head.add(franja);
+      for (const side of [-1, 1]) {
+        const mecha = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.16, 4, 8), toon(CABELO));
+        mecha.position.set(0.26 * side, 0.2, 0.08);
+        mecha.rotation.z = 0.3 * side;
+        bones.head.add(mecha);
+      }
+      // TRANÇA: segmentos que afinam e se alternam de lado (não é bolinha empilhada).
       for (const side of [-1, 1]) {
         const braid = new THREE.Group();
-        for (let i = 0; i < 3; i++) {
-          const seg = new THREE.Mesh(new THREE.SphereGeometry(0.075 - i * 0.008, 10, 8), toon('#c2561a'));
-          seg.position.y = -i * 0.1;
+        const topo = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.02, 6, 12), toon('#ff4fae'));
+        topo.rotation.x = Math.PI / 2;
+        braid.add(topo);
+        for (let i = 0; i < 5; i++) {
+          const r = 0.062 - i * 0.008;
+          const seg = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), toon(CABELO));
+          seg.scale.set(1, 0.82, 1);
+          seg.position.set((i % 2 ? 1 : -1) * 0.018, -0.05 - i * 0.082, 0);
+          seg.rotation.z = (i % 2 ? 1 : -1) * 0.3;
           braid.add(seg);
         }
-        const tie = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.018, 6, 10), toon('#ff4fae'));
-        tie.rotation.x = Math.PI / 2;
-        tie.position.y = -0.28;
-        braid.add(tie);
-        braid.position.set(0.3 * side, 0.12, -0.1);
-        braid.rotation.z = 0.25 * side;
+        const ponta = new THREE.Mesh(new THREE.ConeGeometry(0.026, 0.07, 8), toon(CABELO));
+        ponta.position.y = -0.52;
+        ponta.rotation.x = Math.PI;
+        braid.add(ponta);
+        const laco = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.016, 6, 10), toon('#ff4fae'));
+        laco.rotation.x = Math.PI / 2;
+        laco.position.y = -0.47;
+        braid.add(laco);
+        braid.position.set(0.3 * side, 0.14, -0.08);
+        braid.rotation.z = 0.22 * side;
         bones.head.add(braid);
       }
       // Cílios
       for (const side of [-1, 1]) {
         const lash = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.014, 0.01), toon('#1b1430'));
-        lash.position.set(0.14 * side, 0.35, 0.31);
+        lash.position.set(0.155 * side, 0.335, 0.285);
         lash.rotation.z = -0.4 * side;
         bones.head.add(lash);
       }
@@ -249,9 +300,10 @@ export class CharacterModel {
         add(S.torso, torso);
         if (isHoodie) {
           // Camiseta branca Divertiland aparecendo pelo moletom aberto
+          // Camiseta branca com o "d" da marca (minúsculo, como na prancha).
           const tee = new THREE.Mesh(
             new THREE.PlaneGeometry(0.24, 0.36),
-            toon('#ffffff', { map: textTexture('D', { color: '#8b3cff', font: 210, width: 256, height: 256, bg: '#ffffff' }) }),
+            toon('#ffffff', { map: textTexture('d', { color: c[2] ?? '#7b3fc4', font: 210, width: 256, height: 256, bg: '#ffffff' }) }),
           );
           tee.position.set(0, 0.24, 0.288);
           add(S.torso, tee);
@@ -313,14 +365,28 @@ export class CharacterModel {
         break;
       }
       case 'sneakers': {
+        // Tênis com cabedal, cadarço e solado de volume (a prancha pede isso; antes era
+        // uma cápsula com uma placa retangular embaixo).
         for (const f of [S.footL, S.footR]) {
           const shoe = mesh(new THREE.CapsuleGeometry(0.1, 0.12, 4, 8), c[0]);
           shoe.rotation.x = Math.PI / 2;
           shoe.position.z = 0.05;
           add(f, shoe);
-          const sole = mesh(new THREE.BoxGeometry(0.2, 0.05, 0.34), c[1] ?? '#ffffff');
-          sole.position.set(0, -0.08, 0.05);
+          const bico = mesh(new THREE.SphereGeometry(0.098, 12, 10), c[0]);
+          bico.scale.set(1, 0.82, 1.15);
+          bico.position.set(0, -0.012, 0.15);
+          add(f, bico);
+          const sole = mesh(new THREE.CapsuleGeometry(0.052, 0.26, 4, 10), c[1] ?? '#ffffff');
+          sole.rotation.x = Math.PI / 2;
+          sole.scale.set(1.75, 1, 0.62);
+          sole.position.set(0, -0.078, 0.06);
           add(f, sole);
+          for (let i = 0; i < 3; i++) {
+            const cadarco = mesh(new THREE.BoxGeometry(0.115, 0.016, 0.016), c[1] ?? '#ffffff');
+            cadarco.position.set(0, 0.052 - i * 0.004, 0.02 + i * 0.05);
+            cadarco.rotation.x = -0.18;
+            add(f, cadarco);
+          }
         }
         break;
       }

@@ -25,8 +25,19 @@ import type { LayoutEntity, LevelLayout, Vec3 } from '../../levels/exploration/L
 const E: LayoutEntity[] = [];
 const add = (...e: LayoutEntity[]) => E.push(...e);
 
-const WALL = '#d8c4ff';
-const WALL2 = '#ffc6e6';
+/**
+ * PALETA DO PARQUE REAL (fotos em referencias/03_parque).
+ * A Divertiland tem teto e paredes escuros com pintura de galáxia, piso claro brilhante,
+ * estrutura de brinquedão verde-clara com barras acolchoadas brancas e redes pretas,
+ * escorregadores azul e amarelo, tubo verde e piscinas de bolinhas coloridas.
+ * O fundo escuro dá contraste — por isso os caminhos, moedas e obstáculos continuam
+ * claros e com luz própria.
+ */
+const WALL = '#1a1240'; // parede escura pintada
+const WALL2 = '#241a55'; // parede escura, tom secundário
+const PISO = '#efedf6'; // piso de porcelanato claro
+const ESTRUTURA = '#9fc4a8'; // verde-claro das barras do brinquedão
+const REDE = '#1d1d26'; // rede preta
 const H = 14; // altura do teto
 
 /** Parede ao longo de Z num X fixo. */
@@ -51,16 +62,25 @@ function msg(
 }
 
 // ============================================================ ESTRUTURA GERAL
-floor(-16, 16, -8, 90, 0);
-floor(-16, 16, 102, 190, 0, '#ffd1ec');
+floor(-16, 16, -8, 90, 0, PISO);
+floor(-16, 16, 102, 190, 0, PISO);
 wallX(-16, -8, 190);
 wallX(16, -8, 190);
 wallZ(-8, -16, 16);
 wallZ(190, -16, 16);
-add({ t: 'box', min: [-16, H, -8], max: [16, H + 0.5, 190], style: 'wall', color: '#8a5cff', camera: false });
+add({ t: 'box', min: [-16, H, -8], max: [16, H + 0.5, 190], style: 'wall', color: '#0d0a22', camera: false });
 for (let z = 0; z < 190; z += 12) {
-  add({ t: 'decor', kind: 'lightPanel', pos: [-4, H - 0.06, z], color: z % 24 ? PALETTE.pinkLight : '#ffffff', size: 1.2 });
-  add({ t: 'decor', kind: 'lightPanel', pos: [4, H - 0.06, z + 6], color: z % 24 ? '#ffffff' : PALETTE.cyan, size: 1.2 });
+  add({ t: 'decor', kind: 'lightPanel', pos: [-4, H - 0.06, z], color: '#ffffff', size: 1.1 });
+  add({ t: 'decor', kind: 'lightPanel', pos: [4, H - 0.06, z + 6], color: '#ffffff', size: 1.1 });
+  // luzinhas coloridas de teto, como as do parque
+  if (z % 24 === 0) add({ t: 'decor', kind: 'lightPanel', pos: [-9, H - 0.06, z + 3], color: PALETTE.pink, size: 0.35 });
+  if (z % 24 === 12) add({ t: 'decor', kind: 'lightPanel', pos: [9, H - 0.06, z + 3], color: PALETTE.cyan, size: 0.35 });
+}
+
+// Murais da galáxia e grafismos neon nas paredes externas (fotos do parque).
+for (let z = 4; z < 186; z += 26) {
+  add({ t: 'decor', kind: 'mural', pos: [-15.6, 8.5, z], yaw: Math.PI / 2, size: 2.6, text: z % 52 === 4 ? 'neon' : 'espaco' });
+  add({ t: 'decor', kind: 'mural', pos: [15.6, 8.5, z + 13], yaw: -Math.PI / 2, size: 2.6, text: z % 52 === 30 ? 'neon' : 'espaco' });
 }
 
 // ============================================================ A — ENTRADA (etapa 1)
@@ -162,7 +182,7 @@ add(
     axis: 'z',
     length: 14,
     radius: 1.6,
-    colors: [PALETTE.pink, PALETTE.yellow, PALETTE.cyan, PALETTE.greenNeon, PALETTE.purple],
+    colors: ['#3fae5a', '#51c46d', '#3fae5a', '#79d98f', '#3fae5a'],
   },
   { t: 'coinLine', from: [0, 0.7, 41.5], to: [0, 0.7, 52.5], count: 8 },
   { t: 'cameraZone', min: [-1.6, 0, 39.5], max: [1.6, 3, 54.5], distance: 3.2, pitch: 0.12 },
@@ -211,10 +231,10 @@ msg('m_teddy2', [3, 0, 69], [9, 3, 72.4], 'Um ursinho dourado lá no alto das al
 
 // ============================================================ F — REDE, PONTE E PISCINA DE BOLINHAS
 add(
-  { t: 'box', min: [-9, 0, 84], max: [9, 4, 90], color: PALETTE.purple },
-  { t: 'net', min: [-3, 0, 83.8], max: [3, 4, 84], normal: [0, -1], color: PALETTE.greenNeon },
+  { t: 'box', min: [-9, 0, 84], max: [9, 4, 90], color: ESTRUTURA },
+  { t: 'net', min: [-3, 0, 83.8], max: [3, 4, 84], normal: [0, -1], color: REDE },
   { t: 'checkpoint', id: 'cp2', pos: [-2.2, 4, 87] },
-  { t: 'netBridge', min: [-1.5, 3.8, 90], max: [1.5, 4, 102], color: '#ffffff' },
+  { t: 'netBridge', min: [-1.5, 3.8, 90], max: [1.5, 4, 102], color: REDE },
   { t: 'coinLine', from: [0, 4.7, 92], to: [0, 4.7, 101], count: 7 },
   // PEÇA DE APOIO #1: está no meio da ponte, dá para pegar atravessando.
   { t: 'questItem', id: 'apoio_1', group: 'apoio', kind: 'stack', icon: '🧩', pos: [0, 4.5, 96], color: PALETTE.orange, scale: 1.3 },
@@ -223,11 +243,11 @@ add(
   { t: 'gem', pos: [5, 1.2, 96] },
   // PISTA #1: dentro da piscina de bolinhas (cair aqui é diversão, não castigo).
   { t: 'questItem', id: 'pista_1', group: 'pistas', kind: 'teddy', icon: '🐾', pos: [-5, 0.9, 96], color: '#c98a52', scale: 1.1 },
-  { t: 'box', min: [-9, 0, 102], max: [9, 4, 110], color: PALETTE.pink },
+  { t: 'box', min: [-9, 0, 102], max: [9, 4, 110], color: ESTRUTURA },
   // Duas redes NAS LATERAIS: a ponte de rede passa por cima do meio (x -1,5 a 1,5) e
   // subir pelo centro era impossível — a criança batia a cabeça e ficava presa na metade.
-  { t: 'net', min: [-3.6, 0, 101.8], max: [-1.9, 4, 102], normal: [0, -1], color: PALETTE.yellow },
-  { t: 'net', min: [1.9, 0, 101.8], max: [3.6, 4, 102], normal: [0, -1], color: PALETTE.yellow },
+  { t: 'net', min: [-3.6, 0, 101.8], max: [-1.9, 4, 102], normal: [0, -1], color: REDE },
+  { t: 'net', min: [1.9, 0, 101.8], max: [3.6, 4, 102], normal: [0, -1], color: REDE },
   { t: 'decor', kind: 'neonSign', pos: [0, 7.5, 83.6], yaw: Math.PI, text: 'CIRCUITO DAS REDES', color: PALETTE.greenNeon, size: 0.7 },
 );
 msg('m_net', [-9, 0, 80.5], [9, 3, 83.6], 'Ande até a rede e continue andando para escalar!', {
@@ -401,8 +421,8 @@ add(
     stage: 'a01_e4',
   },
   { t: 'sign', pos: [-8.7, 6.4, 134.6], yaw: Math.PI / 2, text: '🧩 Beto monta a porta', color: PALETTE.cyan, w: 3, h: 1 },
-  { t: 'box', min: [-9, 4, 139.6], max: [-1.75, 5.1, 140], color: PALETTE.pink },
-  { t: 'box', min: [1.75, 4, 139.6], max: [9, 5.1, 140], color: PALETTE.pink },
+  { t: 'box', min: [-9, 4, 139.6], max: [-3.1, 5.1, 140], color: ESTRUTURA },
+  { t: 'box', min: [3.1, 4, 139.6], max: [9, 5.1, 140], color: ESTRUTURA },
   { t: 'decor', kind: 'neonSign', pos: [5.5, 7.4, 139.8], yaw: Math.PI, text: 'ESCORREGADOR', color: PALETTE.pink, size: 0.6 },
   { t: 'sign', pos: [8.7, 6.4, 136], yaw: -Math.PI / 2, text: 'Recanto ⬅️', color: PALETTE.green, w: 2.8, h: 1 },
 );
@@ -481,8 +501,10 @@ msg('m_volta', [-12, 4, 140.2], [-9.7, 7, 143.5], 'Pegou? Agora leve o ursinho d
 
 // ============================================================ I — ESCORREGADOR, TRAMPOLINS E FESTA (etapa 6)
 add(
-  { t: 'questGate', id: 'g_festa', min: [-1.9, 4, 139.4], max: [1.9, 8, 140.1], flag: 'devolveu', color: PALETTE.pink },
-  { t: 'ramp', min: [-1.5, 0, 140], max: [1.5, 4, 156], axis: 'z', h0: 4, h1: 0, slide: true, rails: true, color: PALETTE.yellow },
+  { t: 'questGate', id: 'g_festa', min: [-3.2, 4, 139.4], max: [3.2, 8, 140.1], flag: 'devolveu', color: PALETTE.pink },
+  // Dois escorregadores lado a lado, azul e amarelo, como os do parque.
+  { t: 'ramp', min: [-3, 0, 140], max: [0, 4, 156], axis: 'z', h0: 4, h1: 0, slide: true, rails: true, color: '#2f6fd0' },
+  { t: 'ramp', min: [0, 0, 140], max: [3, 4, 156], axis: 'z', h0: 4, h1: 0, slide: true, rails: true, color: '#ffc61a' },
   { t: 'coinLine', from: [0, 4.2, 142], to: [0, 1.2, 153], count: 6 },
   { t: 'decor', kind: 'cushion', pos: [5, 0, 150], color: PALETTE.green },
 );

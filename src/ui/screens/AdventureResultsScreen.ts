@@ -168,7 +168,7 @@ export class AdventureResultsScreen extends Screen {
       if (i % 3 === 0) g.audio.play('coin', { pitch: 1 + i / steps / 2, volume: 0.5 });
       await wait(40);
     }
-    p.append(h('div', { style: 'text-align:center;color:#5b4a86;font-weight:700' }, `Você tem agora 🪙 ${g.profile!.divertis} Divertis`));
+    p.append(h('div', { style: 'text-align:center;color:#5b4a86;font-weight:700' }, `Você tem agora 🪙 ${g.profile?.divertis ?? 0} Divertis`));
 
     // ---------------- 5. Pontos de Troca: saldo separado, em simulação
     p.append(h('div', { style: 'font-weight:800;margin-top:10px' }, 'Pontos de Troca (brindes no parque):'));
@@ -181,7 +181,7 @@ export class AdventureResultsScreen extends Screen {
           'div',
           null,
           h('b', null, o.tokensEarned > 0 ? `+${o.tokensEarned} Pontos de Troca` : 'Nenhum ponto novo nesta partida'),
-          h('div', { style: 'font-size:14px' }, `Saldo: ${g.profile!.tokens} pontos. Os Pontos de Troca NÃO são Divertis.`),
+          h('div', { style: 'font-size:14px' }, `Saldo: ${g.profile?.tokens ?? 0} pontos. Os Pontos de Troca NÃO são Divertis.`),
         ),
       ),
     );
