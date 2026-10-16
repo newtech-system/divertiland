@@ -114,7 +114,7 @@ aprovada por você).
 
 ### Cenário da Aventura 1 — elementos reconhecíveis do parque
 
-Das fotos em : **teto preto** com painéis de luz brancos e
+Das fotos do parque: **teto preto** com painéis de luz brancos e
 luzinhas coloridas; **piso claro de porcelanato**; **paredes escuras com mural de galáxia**
 (estrelas, planeta com anel) e **grafismo neon com a carinha sorridente**, desenhados em
 canvas; **estrutura do brinquedão verde-clara** com **redes pretas**; **tubo verde**; e
