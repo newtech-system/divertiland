@@ -91,6 +91,42 @@ voltando ao lugar ao continuar a partida, e o texto de "onde procurar" separado 
 | Obstrução de visão em todos os checkpoints | `__viewCheck()` | 0 |
 | Proteção de borda | medição no jogo (acima) | confirmada, com comparação entre estilos |
 
+## 4.1 Segunda rodada: personagens e cenário (V01 e V02)
+
+### Personagens — adaptação 3D conferida com a prancha
+
+| Elemento da prancha | Antes | Agora |
+|---|---|---|
+| Olhos | uma esfera escura com brilho | branco com pupila, brilho e **sobrancelha** |
+| Orelhas | interior da cor do pelo | **interior roxo** nos dois (marca da identidade) |
+| Jhow | sem topete | **topete assimétrico** visível acima dos fones |
+| Mina | tranças = 3 bolinhas empilhadas (o documento proíbe isso como solução final) | franja castanha, mechas laterais e **tranças com segmentos que afinam, torção alternada, ponta e laço rosa** |
+| Jaqueta do Jhow | azul → verde genérico | **turquesa → verde-limão com acabamento roxo** |
+| Mina | colete rosa/lilás, saia roxa lisa | colete **rosa → magenta** e **saia pregueada rosa → roxo** |
+| Camiseta | letra D maiúscula | **d minúsculo da marca**, na cor do acabamento |
+| Tênis | cápsula + placa retangular embaixo | cabedal, **bico, três cadarços e solado com volume** |
+
+**Honestidade sobre o que isso é:** continua sendo o **boneco procedural** do jogo, agora
+muito mais próximo da prancha — não é o modelo final de produção. O que falta para fechar
+V01 está na lista de pendências (modelo, rig e animações próprios, PNGs de corpo inteiro e
+rostos, e a vista de costas, que **não existe na prancha** e terá de ser interpretada e
+aprovada por você).
+
+### Cenário da Aventura 1 — elementos reconhecíveis do parque
+
+Das fotos em : **teto preto** com painéis de luz brancos e
+luzinhas coloridas; **piso claro de porcelanato**; **paredes escuras com mural de galáxia**
+(estrelas, planeta com anel) e **grafismo neon com a carinha sorridente**, desenhados em
+canvas; **estrutura do brinquedão verde-clara** com **redes pretas**; **tubo verde**; e
+**dois escorregadores paralelos, azul e amarelo**.
+
+Dois defeitos encontrados e corrigidos nessa passagem: o sorteio do mural recebia semente
+negativa (posição na parede) e **impedia a fase inteira de carregar**; e os murais estavam
+na parede externa, invisível para quem joga.
+
+**Medido depois:** A01 termina nos três estilos com 0 quedas e 6 etapas; 0 obstrução de
+visão em todos os checkpoints; encaixe sem problemas em 390×844; 96 testes passando.
+
 ## 5. Pendências declaradas (não implementadas nesta rodada)
 
 Nada abaixo está feito; está listado para não ser confundido com entregue.
