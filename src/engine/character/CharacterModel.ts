@@ -157,21 +157,24 @@ export class CharacterModel {
         const topo = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.02, 6, 12), toon('#ff4fae'));
         topo.rotation.x = Math.PI / 2;
         braid.add(topo);
-        for (let i = 0; i < 5; i++) {
-          const r = 0.062 - i * 0.008;
+        // Os gomos se SOBREPÕEM e são mais largos que altos: é isso que lê como trança.
+        // Com espaçamento maior que o raio eles viravam bolinhas empilhadas, que a
+        // seção 3.2 proíbe como solução final.
+        for (let i = 0; i < 7; i++) {
+          const r = 0.058 - i * 0.005;
           const seg = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), toon(CABELO));
-          seg.scale.set(1, 0.82, 1);
-          seg.position.set((i % 2 ? 1 : -1) * 0.018, -0.05 - i * 0.082, 0);
-          seg.rotation.z = (i % 2 ? 1 : -1) * 0.3;
+          seg.scale.set(1.18, 0.78, 0.92);
+          seg.position.set((i % 2 ? 1 : -1) * 0.014, -0.05 - i * 0.062, 0);
+          seg.rotation.z = (i % 2 ? 1 : -1) * 0.42;
           braid.add(seg);
         }
-        const ponta = new THREE.Mesh(new THREE.ConeGeometry(0.026, 0.07, 8), toon(CABELO));
-        ponta.position.y = -0.52;
+        const ponta = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.065, 8), toon(CABELO));
+        ponta.position.y = -0.5;
         ponta.rotation.x = Math.PI;
         braid.add(ponta);
         const laco = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.016, 6, 10), toon('#ff4fae'));
         laco.rotation.x = Math.PI / 2;
-        laco.position.y = -0.47;
+        laco.position.y = -0.455;
         braid.add(laco);
         braid.position.set(0.3 * side, 0.14, -0.08);
         braid.rotation.z = 0.22 * side;
@@ -299,20 +302,43 @@ export class CharacterModel {
         torso.scale.z = 0.86;
         add(S.torso, torso);
         if (isHoodie) {
-          // Camiseta branca Divertiland aparecendo pelo moletom aberto
-          // Camiseta branca com o "d" da marca (minúsculo, como na prancha).
-          const tee = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.24, 0.36),
-            toon('#ffffff', { map: textTexture('d', { color: c[2] ?? '#7b3fc4', font: 210, width: 256, height: 256, bg: '#ffffff' }) }),
-          );
-          tee.position.set(0, 0.24, 0.288);
+          // CAMISETA BRANCA QUE APARECE PELA JAQUETA ABERTA (prancha, 3.1 e 3.2).
+          // Antes era um retângulo reto na frente do peito e lia como uma plaquinha
+          // pendurada. Agora é uma fatia de cilindro com a MESMA curva do tronco, e o
+          // "d" é estampa com fundo transparente por cima dela.
+          // A fatia é estreita de propósito: é a camiseta aparecendo pela ABERTURA da
+          // jaqueta, não um peitoral branco inteiro.
+          const frente = (r0: number, r1: number, alt: number, meia: number) =>
+            new THREE.CylinderGeometry(r0, r1, alt, 14, 1, true, -meia, meia * 2);
+          const tee = new THREE.Mesh(frente(0.298, 0.334, 0.5, 0.36), toon('#ffffff'));
+          tee.position.y = 0.24;
+          tee.scale.z = 0.86;
           add(S.torso, tee);
+          // O "d" vai numa plaquinha da MESMA curva e da mesma cor da camiseta, por isso
+          // a emenda não aparece. O fundo é branco de propósito: o material de desenho
+          // animado não respeita transparência de textura.
+          const estampa = new THREE.Mesh(
+            frente(0.303, 0.327, 0.17, 0.3),
+            toon('#ffffff', { map: textTexture('d', { color: c[2] ?? '#7b3fc4', font: 190, width: 256, height: 256, bg: '#ffffff' }) }),
+          );
+          estampa.position.y = 0.3;
+          estampa.scale.z = 0.86;
+          add(S.torso, estampa);
           // Capuz (detalhe roxo) e cordões
           const hood = mesh(new THREE.TorusGeometry(0.2, 0.06, 8, 16), c[2] ?? '#8b3cff');
           hood.rotation.x = Math.PI / 2.4;
           hood.position.set(0, 0.5, -0.1);
           add(S.torso, hood);
+          // ACABAMENTO ROXO VISÍVEL (3.1): barra embaixo e as duas bordas da abertura.
+          const barra = mesh(new THREE.CylinderGeometry(0.332, 0.336, 0.05, 16), c[2] ?? '#8b3cff');
+          barra.position.y = 0.01;
+          barra.scale.z = 0.86;
+          add(S.torso, barra);
           for (const side of [-1, 1]) {
+            const borda = mesh(new THREE.BoxGeometry(0.022, 0.46, 0.022), c[2] ?? '#8b3cff');
+            borda.position.set(0.112 * side, 0.24, 0.25);
+            borda.rotation.z = 0.05 * side;
+            add(S.torso, borda);
             const cord = mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 6), c[3] ?? '#ffffff');
             cord.position.set(0.07 * side, 0.36, 0.29);
             add(S.torso, cord);
@@ -387,23 +413,57 @@ export class CharacterModel {
             cadarco.rotation.x = -0.18;
             add(f, cadarco);
           }
+          // Meia clara com um friso na cor do tênis (3.2). Só aparece quando o item
+          // define a terceira cor, então os outros tênis continuam como estavam.
+          if (c[2]) {
+            const meia = mesh(new THREE.CylinderGeometry(0.088, 0.095, 0.11, 12), c[2]);
+            meia.position.set(0, 0.105, 0.015);
+            add(f, meia);
+            const friso = mesh(new THREE.TorusGeometry(0.089, 0.012, 6, 14), c[0]);
+            friso.rotation.x = Math.PI / 2;
+            friso.position.set(0, 0.145, 0.015);
+            add(f, friso);
+          }
         }
         break;
       }
       case 'headphones': {
-        const band = mesh(new THREE.TorusGeometry(0.36, 0.035, 8, 20, Math.PI), c[0]);
-        band.position.y = 0.0;
-        add(S.ears, band);
+        // FONE NO PESCOÇO (3.1: "fones pretos com detalhes roxos no pescoço").
+        // Antes ficava na cabeça, cobrindo as orelhas arredondadas que são marca dos
+        // dois mascotes. Vai no tronco para acompanhar os ombros, não a cabeça.
+        // Tudo num grupo levemente inclinado para frente, como um fone descansando
+        // nos ombros: o aro contorna o pescoço e as conchas caem sobre o peito.
+        // O aro precisa ser MAIOR que o tronco nessa altura (raio 0,29), senão fica
+        // escondido dentro do corpo. Ele descansa sobre os ombros e as conchas caem na
+        // frente, uma de cada lado do peito.
+        const fone = new THREE.Group();
+        fone.position.set(0, 0.43, 0.01);
+        fone.rotation.x = 0.12;
+        // O aro passa por TRÁS do pescoço e termina nas duas conchas, que caem na frente.
+        // Um aro inteiro cruzaria o peito e pareceria uma alça.
+        // Só o pedaço de TRÁS do aro aparece; o que identifica o fone são as duas
+        // conchas grandes caídas sobre o peito, uma de cada lado.
+        const arco = mesh(new THREE.TorusGeometry(0.29, 0.028, 8, 24, Math.PI * 1.08, Math.PI * 0.84), c[0]);
+        arco.rotation.x = Math.PI / 2;
+        fone.add(arco);
         for (const side of [-1, 1]) {
-          const cup = mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.08, 14), c[0]);
+          const cup = mesh(new THREE.CylinderGeometry(0.098, 0.098, 0.07, 16), c[0]);
           cup.rotation.z = Math.PI / 2;
-          cup.position.set(0.36 * side, -0.02, 0);
-          add(S.ears, cup);
-          const ring = mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 14), c[1] ?? c[0], { emissive: 0.4 });
-          ring.rotation.y = Math.PI / 2;
-          ring.position.set(0.405 * side, -0.02, 0);
-          add(S.ears, ring);
+          cup.rotation.y = 0.5 * side;
+          cup.position.set(0.245 * side, -0.075, 0.16);
+          fone.add(cup);
+          const ring = mesh(new THREE.TorusGeometry(0.07, 0.019, 6, 16), c[1] ?? c[0], { emissive: 0.4 });
+          ring.rotation.y = Math.PI / 2 + 0.5 * side;
+          ring.position.set(0.276 * side, -0.075, 0.177);
+          fone.add(ring);
+          // Haste curta ligando o aro à concha.
+          const haste = mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.1, 8), c[0]);
+          haste.position.set(0.268 * side, -0.035, 0.09);
+          haste.rotation.x = 1.1;
+          haste.rotation.z = 0.25 * side;
+          fone.add(haste);
         }
+        add(S.torso, fone);
         break;
       }
       case 'cap': {

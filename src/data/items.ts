@@ -86,7 +86,8 @@ export const ITEMS: ItemDef[] = [
   { id: 'top_mina_outfit', name: 'Colete da Mina', icon: '👚', slot: 'top', category: 'clothes', price: 0, acquire: D, characters: ['mina'], visual: { kind: 'hoodie', colors: ['#ff4fa3', '#c04fd8', '#7b3fc4', '#ffffff'] } },
   // Saia pregueada rosa → roxo (prancha). A miniatura da loja usa saia, não vestido.
   { id: 'bottom_mina_skirt', name: 'Saia Pregueada', icon: '👗', slot: 'bottom', category: 'clothes', price: 0, acquire: D, visual: { kind: 'skirt', colors: ['#ff4fa3', '#a14dd8'] } },
-  { id: 'feet_pink', name: 'Tênis Rosa', icon: '👟', slot: 'feet', category: 'clothes', price: 0, acquire: D, visual: { kind: 'sneakers', colors: ['#ff5cb8', '#ffffff'] } },
+  // A terceira cor é a meia clara da Mina (3.2: "meias claras com detalhes rosa").
+  { id: 'feet_pink', name: 'Tênis Rosa', icon: '👟', slot: 'feet', category: 'clothes', price: 0, acquire: D, visual: { kind: 'sneakers', colors: ['#ff5cb8', '#ffffff', '#fff1f8'] } },
   { id: 'head_visor_white', name: 'Viseira Branca', icon: '🧢', slot: 'head', category: 'accessories', price: 0, acquire: D, visual: { kind: 'visor', colors: ['#ffffff', '#ff4fae'] } },
 
   // ---------- ROUPAS ----------
