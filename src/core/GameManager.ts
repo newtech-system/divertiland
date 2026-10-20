@@ -171,6 +171,11 @@ export class GameManager {
     return this.portraits.make(c, defaultLook(c));
   }
 
+  /** Mascote de corpo inteiro, com o visual padrão (abertura). */
+  mascotFull(c: CharacterId): string {
+    return this.portraits.full(c, defaultLook(c));
+  }
+
   // ------------------------------------------------------------------ navegação
 
   goTitle(): void {

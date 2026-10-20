@@ -17,6 +17,8 @@ export class PortraitFactory {
   private target = new THREE.WebGLRenderTarget(256, 256);
   private cache = new Map<string, string>();
   private canvas = document.createElement('canvas');
+  private fullCamera?: THREE.PerspectiveCamera;
+  private fullTarget?: THREE.WebGLRenderTarget;
 
   constructor(private gl: THREE.WebGLRenderer) {
     this.scene.add(new THREE.HemisphereLight('#ffffff', '#ffc2e0', 2));
@@ -30,7 +32,35 @@ export class PortraitFactory {
   }
 
   make(character: CharacterId, look: ResolvedLook): string {
-    const key = character + '|' + Object.values(look).map((i) => i?.id).join(',');
+    return this.render('rosto', character, look, 256, 256, this.camera);
+  }
+
+  /**
+   * CORPO INTEIRO (seção 12 do prompt de 16/10), para a abertura e material visual.
+   * É uma renderização do modelo que o jogo usa de verdade — não é o PNG de produção
+   * de 2048 px que ainda está pendente.
+   */
+  full(character: CharacterId, look: ResolvedLook): string {
+    if (!this.fullCamera) {
+      this.fullCamera = new THREE.PerspectiveCamera(26, 512 / 1024, 0.1, 20);
+      this.fullCamera.position.set(0, 0.95, 4.4);
+      this.fullCamera.lookAt(0, 0.82, 0);
+      this.fullTarget = new THREE.WebGLRenderTarget(512, 1024);
+      this.fullTarget.texture.colorSpace = THREE.SRGBColorSpace;
+    }
+    return this.render('corpo', character, look, 512, 1024, this.fullCamera, this.fullTarget!);
+  }
+
+  private render(
+    tipo: string,
+    character: CharacterId,
+    look: ResolvedLook,
+    w: number,
+    h: number,
+    camera: THREE.PerspectiveCamera,
+    target: THREE.WebGLRenderTarget = this.target,
+  ): string {
+    const key = tipo + '|' + character + '|' + Object.values(look).map((i) => i?.id).join(',');
     const hit = this.cache.get(key);
     if (hit) return hit;
     try {
@@ -38,21 +68,23 @@ export class PortraitFactory {
       model.object.rotation.y = 0.25;
       this.scene.add(model.object);
       const prevTarget = this.gl.getRenderTarget();
-      this.gl.setRenderTarget(this.target);
+      this.gl.setRenderTarget(target);
       this.gl.setClearColor(0x000000, 0);
       this.gl.clear();
-      this.gl.render(this.scene, this.camera);
-      const px = new Uint8Array(256 * 256 * 4);
-      this.gl.readRenderTargetPixels(this.target, 0, 0, 256, 256, px);
+      this.gl.render(this.scene, camera);
+      const px = new Uint8Array(w * h * 4);
+      this.gl.readRenderTargetPixels(target, 0, 0, w, h, px);
       this.gl.setRenderTarget(prevTarget);
       model.dispose();
+      this.canvas.width = w;
+      this.canvas.height = h;
       const ctx = this.canvas.getContext('2d')!;
-      const img = ctx.createImageData(256, 256);
+      const img = ctx.createImageData(w, h);
       // WebGL lê de baixo para cima: inverte as linhas.
-      for (let y = 0; y < 256; y++) {
-        img.data.set(px.subarray((255 - y) * 256 * 4, (256 - y) * 256 * 4), y * 256 * 4);
+      for (let y = 0; y < h; y++) {
+        img.data.set(px.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);
       }
-      ctx.clearRect(0, 0, 256, 256);
+      ctx.clearRect(0, 0, w, h);
       ctx.putImageData(img, 0, 0);
       const url = this.canvas.toDataURL('image/png');
       this.cache.set(key, url);

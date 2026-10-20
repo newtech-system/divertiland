@@ -117,10 +117,16 @@ const texCache = new Map<string, THREE.Texture>();
  * de galáxia — estrelas, planetas e um astronauta — além de grafismos fluorescentes.
  * A textura é desenhada em canvas, então não depende de arquivo de imagem.
  */
-export function muralTexture(kind: 'espaco' | 'neon' = 'espaco', seed = 1): THREE.Texture {
-  const key = `mural:${kind}:${seed}`;
-  const cached = texCache.get(key);
-  if (cached) return cached;
+const muralCache = new Map<string, HTMLCanvasElement>();
+
+/**
+ * O mural desenhado, como canvas. A tela de abertura usa a MESMA pintura das paredes
+ * da fase (como imagem de fundo), então o menu e o jogo não parecem dois produtos.
+ */
+export function muralCanvas(kind: 'espaco' | 'neon' = 'espaco', seed = 1): HTMLCanvasElement {
+  const cacheKey = `mural:${kind}:${seed}`;
+  const pronto = muralCache.get(cacheKey);
+  if (pronto) return pronto;
   const w = 1024;
   const h = 512;
   const canvas = document.createElement('canvas');
@@ -220,7 +226,15 @@ export function muralTexture(kind: 'espaco' | 'neon' = 'espaco', seed = 1): THRE
     ctx.stroke();
   }
 
-  const tex = new THREE.CanvasTexture(canvas);
+  muralCache.set(cacheKey, canvas);
+  return canvas;
+}
+
+export function muralTexture(kind: 'espaco' | 'neon' = 'espaco', seed = 1): THREE.Texture {
+  const key = `mural:${kind}:${seed}`;
+  const cached = texCache.get(key);
+  if (cached) return cached;
+  const tex = new THREE.CanvasTexture(muralCanvas(kind, seed));
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 4;
   texCache.set(key, tex);

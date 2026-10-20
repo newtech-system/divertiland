@@ -301,12 +301,76 @@ body {
 }
 
 /* ---------------------------------------------------------------- tela título */
+/* Seção 5.1: cenário do parque com profundidade, no lugar do degradê com emoji. */
 .title-screen {
   align-items: center;
   justify-content: center;
+  padding: 0;
+  overflow: hidden;
+}
+.parque {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.parque .parede {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #120c30 0%, #221650 55%, #2d1f68 100%);
+}
+.parque .mural {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  width: min(170%, 1200px);
+  transform: translateX(-50%);
+  opacity: 0.9;
+  animation: muralDrift 26s ease-in-out infinite;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 45%, #000 48%, transparent 78%);
+  mask-image: radial-gradient(ellipse at 50% 45%, #000 48%, transparent 78%);
+}
+@keyframes muralDrift {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-48%) scale(1.05);
+  }
+}
+.parque > svg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+/* Os mascotes ficam de pé no piso, nos cantos, para não disputarem espaço com o
+   logo e o botão no meio da tela. */
+.parque .mascote {
+  position: absolute;
+  bottom: 3.5%;
+  height: clamp(110px, min(46vw, calc(var(--app-h) * 0.5)), 400px);
+  width: auto;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.45));
+  animation: bob 3.4s ease-in-out infinite;
+}
+.parque .mascote.esq {
+  left: calc(1% + var(--safe-left));
+}
+.parque .mascote.dir {
+  right: calc(1% + var(--safe-right));
+  animation-delay: 0.7s;
+}
+.title-frente {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: var(--gap);
-  padding: calc(var(--pad) + var(--safe-top)) calc(var(--pad) + var(--safe-right)) calc(var(--pad) + var(--safe-bottom)) calc(var(--pad) + var(--safe-left));
-  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.25), transparent 60%);
+  padding: calc(var(--pad) + var(--safe-top)) var(--pad) 0;
 }
 .logo {
   display: flex;
@@ -335,19 +399,17 @@ body {
   margin-top: clamp(2px, 1vh, 10px);
   box-shadow: 0 5px 0 #b8106a;
 }
-/* Mascotes ao lado do logo: somem se a tela for muito estreita. */
-.title-mascot .portrait {
-  width: clamp(44px, min(16vw, calc(var(--app-h) * 0.26)), 120px);
-  height: clamp(44px, min(16vw, calc(var(--app-h) * 0.26)), 120px);
+/* Tela deitada e baixa: o logo e o botão encostam no topo para o cenário aparecer. */
+body.short .title-frente {
+  justify-content: flex-start;
+  gap: calc(var(--gap) * 0.6);
 }
-/* Celular em pé e estreito: o logo fica sozinho na primeira linha e os mascotes
-   aparecem embaixo, lado a lado (aproveita o espaço vertical de sobra). */
-body.narrow.em-pe .title-screen .row {
-  flex-wrap: wrap;
-}
-body.narrow.em-pe .title-screen .logo {
-  order: -1;
-  flex-basis: 100%;
+/* O botão de ajustes é secundário, mas precisa ser achável sobre qualquer parte do
+   cenário — por isso ganha fundo próprio em vez do vidro translúcido. */
+.title-frente .btn.round.ghost {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--purple-d);
+  box-shadow: 0 5px 0 rgba(75, 26, 158, 0.55), 0 8px 18px rgba(0, 0, 0, 0.3);
 }
 @keyframes bob {
   0%,
