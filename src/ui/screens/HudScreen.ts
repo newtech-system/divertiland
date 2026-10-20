@@ -116,16 +116,23 @@ export class HudScreen extends Screen implements HudApi {
     window.addEventListener('resize', this.checkOrientation);
     this.checkOrientation();
     // Publica a altura real do bloco de cima para os avisos nao caírem sobre o objetivo.
-    this.topObserver = new ResizeObserver(() => {
-      document.documentElement.style.setProperty('--hud-top-h', `${Math.round(this.topEl.getBoundingClientRect().height)}px`);
-    });
+    // A primeira medida e feita JA: o ResizeObserver so avisa no quadro seguinte, e um
+    // aviso que aparecesse antes disso cairia em cima do objetivo.
+    this.publishTopHeight();
+    this.topObserver = new ResizeObserver(this.publishTopHeight);
     this.topObserver.observe(this.topEl);
   }
+
+  /** Guarda a altura do bloco de cima do HUD para o CSS dos avisos. */
+  private publishTopHeight = () => {
+    document.documentElement.style.setProperty('--hud-top-h', `${Math.round(this.topEl.getBoundingClientRect().height)}px`);
+  };
 
   onHide() {
     this.topObserver?.disconnect();
     this.topObserver = undefined;
-    document.documentElement.style.removeProperty('--hud-top-h');
+    // A medida fica guardada de proposito: se for apagada aqui, um aviso disparado
+    // logo depois voltaria para cima do objetivo usando o valor de reserva.
     window.removeEventListener('resize', this.checkOrientation);
     this.touch?.reset();
     if (this.speechTimer) clearTimeout(this.speechTimer);
