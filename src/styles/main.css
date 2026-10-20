@@ -1272,7 +1272,10 @@ body.short .diff-btn .desc {
 }
 .toast-layer {
   position: absolute;
-  top: calc(80px + var(--safe-top));
+  /* Os avisos entram ABAIXO do bloco de cima do HUD. Antes caiam em cima da barra do
+     objetivo e as duas frases ficavam sobrepostas no celular. A altura real do bloco
+     vem do HudScreen pela variavel --hud-top-h. */
+  top: calc(var(--safe-top) + var(--hud-top-h, 70px) + 20px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;

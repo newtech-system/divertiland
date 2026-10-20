@@ -21,6 +21,8 @@ export class HudScreen extends Screen implements HudApi {
   private promptEl!: HTMLElement;
   private fadeEl!: HTMLElement;
   private timerEl!: HTMLElement;
+  private topEl!: HTMLElement;
+  private topObserver?: ResizeObserver;
   private touch: TouchControls | SwipeControls | null = null;
   private controlsMode: 'move' | 'pointer' | 'swipe' = 'move';
   private panelSlot!: HTMLElement;
@@ -88,7 +90,7 @@ export class HudScreen extends Screen implements HudApi {
       onClick: () => this.onHelp?.(),
     });
     this.helpBtn.style.display = this.onHelp ? '' : 'none';
-    const top = h(
+    const top = (this.topEl = h(
       'div',
       { class: 'hud-top' },
       h('div', { class: 'hud-left' }, this.coinsPill, this.objsEl),
@@ -97,7 +99,7 @@ export class HudScreen extends Screen implements HudApi {
       this.helpBtn,
       this.replayBtn,
       pause,
-    );
+    ));
     this.panelSlot = h('div', { class: 'hud-panel' });
     if (this.panelEl) this.panelSlot.append(this.panelEl);
     this.coinsPill.style.display = this.coinsVisible ? '' : 'none';
@@ -113,9 +115,17 @@ export class HudScreen extends Screen implements HudApi {
     this.refreshTouch();
     window.addEventListener('resize', this.checkOrientation);
     this.checkOrientation();
+    // Publica a altura real do bloco de cima para os avisos nao caírem sobre o objetivo.
+    this.topObserver = new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--hud-top-h', `${Math.round(this.topEl.getBoundingClientRect().height)}px`);
+    });
+    this.topObserver.observe(this.topEl);
   }
 
   onHide() {
+    this.topObserver?.disconnect();
+    this.topObserver = undefined;
+    document.documentElement.style.removeProperty('--hud-top-h');
     window.removeEventListener('resize', this.checkOrientation);
     this.touch?.reset();
     if (this.speechTimer) clearTimeout(this.speechTimer);
