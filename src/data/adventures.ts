@@ -1,3 +1,4 @@
+import type { CenaMapa } from '../ui/components/mapaParque';
 import type { CharacterId, DifficultyId, SkillFocus } from '../core/types';
 import type { ObjectiveDef, UnlockRule } from './levelTypes';
 
@@ -91,7 +92,12 @@ export interface AdventureDef {
   worldPiece: { id: string; name: string; icon: string };
   /** Tamanho para a economia (ver data/economy.ts). */
   size: 'short' | 'normal' | 'main';
-  map: { x: number; y: number; style: 'normal' | 'special' };
+  /**
+   * Lugar no mapa, ATRAÇÃO que representa a aventura e nome curto.
+   * A cena e o nome curto vêm daqui, e não de uma lista fixa na tela: uma aventura
+   * nova entra no mapa só acrescentando dados (seção 5.2).
+   */
+  map: { x: number; y: number; style: 'normal' | 'special'; cena: CenaMapa; curto: string };
   /** false = ainda tem etapa com conteúdo provisório; o mapa avisa com honestidade. */
   finalContent: boolean;
 }
@@ -144,7 +150,7 @@ export const ADVENTURES: AdventureDef[] = [
     },
     worldPiece: { id: 'world_recanto_ursinho', name: 'Recanto do Ursinho', icon: '🧸' },
     size: 'main',
-    map: { x: 50, y: 0, style: 'normal' },
+    map: { x: 50, y: 0, style: 'normal', cena: 'brinquedao', curto: 'Caminho da Gentileza' },
     finalContent: true,
   },
 
@@ -190,7 +196,7 @@ export const ADVENTURES: AdventureDef[] = [
     },
     worldPiece: { id: 'world_estante_descobertas', name: 'Estante das Descobertas', icon: '📚' },
     size: 'normal',
-    map: { x: 24, y: 1, style: 'normal' },
+    map: { x: 24, y: 1, style: 'normal', cena: 'brinquedoteca', curto: 'Casa dos Mistérios' },
     finalContent: false,
   },
 
@@ -234,7 +240,7 @@ export const ADVENTURES: AdventureDef[] = [
     },
     worldPiece: { id: 'world_decoracao_corrida', name: 'Decoração da Corrida', icon: '🎊' },
     size: 'normal',
-    map: { x: 72, y: 2, style: 'normal' },
+    map: { x: 72, y: 2, style: 'normal', cena: 'escorregador', curto: 'Expresso da Alegria' },
     finalContent: false,
   },
 
@@ -282,7 +288,7 @@ export const ADVENTURES: AdventureDef[] = [
     },
     worldPiece: { id: 'world_ponte_aventura', name: 'Ponte da Aventura', icon: '🌉' },
     size: 'main',
-    map: { x: 30, y: 3, style: 'normal' },
+    map: { x: 30, y: 3, style: 'normal', cena: 'espacial', curto: 'A Grande Travessia' },
     finalContent: false,
   },
 
@@ -329,7 +335,7 @@ export const ADVENTURES: AdventureDef[] = [
     },
     worldPiece: { id: 'world_bandeira_equipe', name: 'Bandeira da Equipe', icon: '🚩' },
     size: 'main',
-    map: { x: 62, y: 4, style: 'special' },
+    map: { x: 62, y: 4, style: 'special', cena: 'arena', curto: 'Guardiões da Diversão' },
     finalContent: false,
   },
 ];

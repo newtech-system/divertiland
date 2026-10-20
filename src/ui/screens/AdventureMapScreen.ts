@@ -10,6 +10,7 @@ import { otherCharacter } from '../../engine/character/looks';
 import { h, stars, wait } from '../dom';
 import { Screen } from '../UIManager';
 import { btn, difficultyPicker, portraitImg, speech } from '../components/widgets';
+import { atracaoSvg, fundoDoParque, propsDoParque } from '../components/mapaParque';
 import { openAchievements } from './AchievementsModal';
 
 export interface MapEnterOptions {
@@ -58,13 +59,12 @@ export class AdventureMapScreen extends Screen {
     const height = PAD_BOTTOM + maxY * STEP + PAD_TOP;
     const posOf = (x: number, y: number) => ({ left: x, bottom: PAD_BOTTOM + y * STEP });
 
-    const worldEl = h('div', { class: 'map-world', style: `height:${height}px` }, h('div', { class: 'map-bg' }));
-
-    const decos = ['🎈', '🎠', '🍭', '⭐', '🎪', '🎡', '🎢', '🧁', '🎉', '🪁'];
-    for (let i = 0; i < 14; i++) {
-      const y = 60 + i * (height / 14);
-      const x = i % 2 ? 6 + ((i * 7) % 10) : 82 + ((i * 5) % 10);
-      worldEl.append(h('div', { class: 'map-deco', style: `left:${x}%;bottom:${y}px;animation-delay:${i * 0.4}s` }, decos[i % decos.length]));
+    const worldEl = h('div', { class: 'map-world', style: `height:${height}px` });
+    // O chão do parque (piso claro, tapetes dos setores e respingos) entra no lugar do
+    // degradê com emoji espalhado que o documento manda evitar.
+    worldEl.append(fundoDoParque(height));
+    for (const p of propsDoParque(height)) {
+      worldEl.append(h('div', { class: 'map-prop-wrap', style: `left:${p.x}%;bottom:${p.y}px` }, p.el));
     }
 
     // ---------------- caminho entre as aventuras
@@ -116,18 +116,23 @@ export class AdventureMapScreen extends Screen {
         h(
           'div',
           { class: 'bubble' },
-          h('span', { class: 'icon' }, adv.icon),
+          atracaoSvg(adv.map.cena),
           state === 'LOCKED' ? h('span', { class: 'lock' }, '🔒') : null,
           h('span', { class: 'num' }, adv.order),
           state === 'IN_PROGRESS' ? h('span', { class: 'inprog' }, '⏯️') : null,
         ),
         stars(s.adventures.stars(adv.id)),
-        h('div', { class: 'label' }, adv.name),
-        h(
-          'div',
-          { class: 'label', style: 'font-size:13px;opacity:.9' },
-          state === 'LOCKED' ? '🔒 termine a anterior' : `🧸 ${ap.goldens.length}/3${adv.finalContent ? '' : ' · versão provisória'}`,
-        ),
+        // Só a aventura da vez mostra nome e andamento. O documento pede título curto e
+        // progresso AO SELECIONAR, sem jogar todos os detalhes sobre o mapa — antes
+        // cada nó carregava o nome inteiro e mais duas linhas.
+        adv.id === currentId ? h('div', { class: 'label' }, adv.map.curto) : null,
+        adv.id === currentId
+          ? h(
+              'div',
+              { class: 'label', style: 'font-size:13px;opacity:.9' },
+              `🧸 ${ap.goldens.length}/3${adv.finalContent ? '' : ' · versão provisória'}`,
+            )
+          : null,
       );
       if (isNew) node.style.animation = 'popIn 0.8s cubic-bezier(0.2,1.6,0.4,1) 0.6s backwards';
       worldEl.append(node);
@@ -145,7 +150,7 @@ export class AdventureMapScreen extends Screen {
         'div',
         {
           class: 'map-node available special',
-          style: `left:84%;bottom:${PAD_BOTTOM + 0.3 * STEP}px`,
+          style: `left:80%;bottom:${PAD_BOTTOM + 0.3 * STEP}px`,
           role: 'button',
           'aria-label': 'Meu Mundo Divertiland',
           onclick: () => this.openMeuMundo(),
@@ -205,9 +210,15 @@ export class AdventureMapScreen extends Screen {
       { class: 'map-top' },
       h('div', { class: 'who', role: 'button', onclick: () => (g.audio.play('button'), g.goProfiles()) }, portraitImg(g.portraitFor(), p.character), p.name),
       h('div', { class: 'pill', title: 'Divertis: a moeda de brincar' }, h('span', { class: 'ico' }, '🪙'), String(p.divertis)),
-      h('div', { class: 'pill' }, h('span', { class: 'ico' }, '⭐'), `${s.adventures.totalStars()}/${MAX_CAMPAIGN_STARS}`),
-      h('div', { class: 'pill' }, h('span', { class: 'ico' }, '🧸'), `${s.adventures.goldenCount().found}/${MAX_GOLDEN_TEDDIES}`),
-      this.tokenPill(),
+      // Seção 5.2: carteira e coleção saem de cima do mapa e passam a viver num painel
+      // secundário. Antes eram quatro contadores empilhados sobre as aventuras — no
+      // celular da proprietária eles cobriam os nós do mapa.
+      h(
+        'div',
+        { class: 'pill', role: 'button', 'aria-label': 'Abrir carteira e coleção', onclick: () => this.openCarteira() },
+        h('span', { class: 'ico' }, '🎒'),
+        'Carteira',
+      ),
       h('div', { class: 'grow' }),
       btn(g, null, { icon: '⚙️', cls: 'round white', aria: 'Ajustes', onClick: () => g.openSettings() }),
     );
@@ -225,6 +236,50 @@ export class AdventureMapScreen extends Screen {
     );
 
     return h('div', { class: 'screen map-screen' }, this.scroll, top, this.bottom);
+  }
+
+  /** Carteira e coleção: o painel secundário do mapa (seção 5.2). */
+  private openCarteira() {
+    const g = this.game;
+    const s = g.services;
+    const p = g.profile!;
+    const linha = (ico: string, titulo: string, valor: string, nota?: string) =>
+      h(
+        'div',
+        { class: 'objective' },
+        h('span', { class: 'o-ico' }, ico),
+        h('div', null, h('div', { style: 'font-weight:800' }, titulo), nota ? h('div', { style: 'font-size:13px;opacity:.85' }, nota) : null),
+        h('div', { class: 'grow' }),
+        h('div', { style: 'font-weight:800' }, valor),
+      );
+    const pieces = this.worldPieces();
+    const card = h(
+      'div',
+      { class: 'panel level-card' },
+      h('h2', { class: 'title-l' }, '🎒 Sua carteira'),
+      h(
+        'div',
+        { class: 'objectives' },
+        linha('🪙', 'Divertis', String(p.divertis), 'Para roupas, enfeites e o Meu Mundo.'),
+        linha('⭐', 'Estrelas', `${s.adventures.totalStars()}/${MAX_CAMPAIGN_STARS}`),
+        linha('🧸', 'Ursinhos dourados', `${s.adventures.goldenCount().found}/${MAX_GOLDEN_TEDDIES}`),
+      ),
+      h('h2', { class: 'title-l', style: 'margin-top:10px' }, '🎟️ Pontos de Troca'),
+      h('div', { class: 'objectives' }, h('div', { class: 'objective' }, this.tokenPill())),
+      REWARD_MODE === 'simulacao'
+        ? h(
+            'div',
+            { class: 'unlock-banner', style: 'background:linear-gradient(90deg,#ffd60a,#ff8a00);color:#2a1457' },
+            'Os Pontos de Troca estão em SIMULAÇÃO: ainda não valem prêmio de verdade no parque.',
+          )
+        : null,
+      h('h2', { class: 'title-l', style: 'margin-top:10px' }, `🧩 Coleção do Meu Mundo (${pieces.length}/${ADVENTURES.length})`),
+      pieces.length
+        ? h('div', { class: 'objectives' }, ...pieces.map((w) => h('div', { class: 'objective done' }, h('span', { class: 'o-ico' }, w.icon), w.name)))
+        : h('div', { style: 'color:#5b4a86;font-weight:600' }, 'Cada aventura concluída traz uma peça nova para o seu mundo.'),
+    );
+    g.audio.play('button');
+    g.ui.modal(card);
   }
 
   /** Pontos de Troca: saldo SEPARADO e com o aviso de simulação sempre visível (18.6). */
@@ -252,8 +307,9 @@ export class AdventureMapScreen extends Screen {
     const a02 = s.adventures.progress('a02').completed;
     const all = ADVENTURES.every((a) => s.adventures.progress(a.id).completed);
     return [
-      { levelId: 'w1_l06', x: 12, y: 1.9, open: a02, need: 'Termine a Aventura 2' },
-      { levelId: 'w1_l10', x: 88, y: 3.2, open: all, need: 'Termine as 5 aventuras' },
+      // x entre 20 e 80: mais para a borda, a plaquinha do nome sai da tela no celular.
+      { levelId: 'w1_l06', x: 20, y: 1.9, open: a02, need: 'Termine a Aventura 2' },
+      { levelId: 'w1_l10', x: 80, y: 3.2, open: all, need: 'Termine as 5 aventuras' },
     ];
   }
 
@@ -291,7 +347,10 @@ export class AdventureMapScreen extends Screen {
     if (state === 'LOCKED') {
       g.audio.play('softError');
       const prev = ADVENTURES.find((a) => a.order === adv.order - 1);
-      g.ui.toast('🔒', prev ? `Termine "${prev.name}" para abrir!` : 'Ainda não abriu!');
+      const porque = prev ? `Esta aventura abre quando você terminar ${prev.map.curto}.` : 'Esta aventura ainda não abriu.';
+      g.ui.toast('🔒', porque);
+      // Seção 5.2: o bloqueio é explicado EM VOZ e em símbolo, para quem não lê.
+      g.speak(porque);
       return;
     }
     g.audio.play('button');
