@@ -127,25 +127,75 @@ na parede externa, invisível para quem joga.
 **Medido depois:** A01 termina nos três estilos com 0 quedas e 6 etapas; 0 obstrução de
 visão em todos os checkpoints; encaixe sem problemas em 390×844; 96 testes passando.
 
-## 5. Pendências declaradas (não implementadas nesta rodada)
+## 5. O que falta do prompt de 16/10 (situação em 20/10)
 
-Nada abaixo está feito; está listado para não ser confundido com entregue.
+Conferido item a item contra `01_PROMPT_EXECUCAO.md`, abrindo o jogo rodando. Nada aqui
+está marcado como pronto sem evidência; "parcial" quer dizer que existe no jogo mas ainda
+não cumpre o que o documento pede.
 
-1. **Personagens oficiais em 3D** (V01). A prancha foi examinada e o figurino está
-   descrito abaixo, mas o personagem que anda ainda é o modelo procedural atual.
-   Falta: modelo, materiais, rig e animações fiéis; PNGs de corpo inteiro e rostos.
-2. **Ambientes baseados nas fotos** (V02). A Aventura 1 continua com o cenário de blocos.
-   Falta: estrutura verde com barras acolchoadas e redes pretas, escorregadores azul e
-   amarelo, tubo verde, murais de planetas/astronauta, piso claro brilhante, teto escuro.
-3. **Tela de apresentação da aventura** (5.3): 8–15 s com demonstração, "Vamos brincar",
-   "Ouvir de novo" e "Pular explicação". Hoje a instrução ainda chega por falas no HUD —
-   por isso duas falas longas precisaram de quatro linhas até eu encurtá-las.
-4. **Caça a objetos em cena frontal** (A02 / V08), memória com Ouça/Observe/Sua vez,
-   corrida, circuito e pega-pega refeitos.
-5. **"Quem é o Travesso?"** (A06) e Meu Mundo construível.
-6. **Voz**: só falas escritas e leitura do aparelho; nenhum áudio final.
-7. **Teste com criança** (V06): continua sendo o teste que vale, e não aconteceu.
-8. **Desempenho medido** (V17) em aparelho intermediário real: não medido.
+### 5.1 Plano de execução (seção 13)
+
+| Etapa | Situação |
+|---|---|
+| 1 — Auditoria verificável | **Feita** (seções 1 a 4 deste documento) |
+| 2 — Primeira fatia visual e jogável | **Parcial**: Aventura 1 e personagens avançaram; abertura e mapa não foram refeitos |
+| 3 — Fechar A01 e acessibilidade | **Quase**: missão, dourados, segredo, checkpoints e save prontos e testados; falta o teste com criança |
+| 4 — Refazer caça e demais aventuras | **Não começou** |
+| 5 — Travesso e Meu Mundo | **Não começou** |
+| 6 — Verificação final e entrega | **Não começou** (falta desempenho medido e migração reverificada) |
+
+### 5.2 Aceitação (seção 14)
+
+| ID | O que exige | Situação |
+|---|---|---|
+| V01 | Mascotes reconhecíveis | **Parcial.** Rosto, orelha roxa, topete, tranças, figurino e tênis conferem com a prancha. Ainda é o boneco procedural: sem modelo/rig/animações de produção, sem PNG de corpo inteiro nem de rosto, sem vista de costas aprovada. Três desvios visíveis: fones na cabeça e não no pescoço, o "d" flutua como plaquinha em vez de estampa na camiseta, e o acabamento roxo da jaqueta quase não aparece |
+| V02 | Parque reconhecível | **Parcial.** Só a Aventura 1, e só em parte dela: piso claro, teto escuro, murais de galáxia e neon, estrutura verde, redes pretas, tubo verde e os dois escorregadores. Entrada, praça e Recanto continuam com a paleta antiga de doces |
+| V03 | Fases distintas | **Não.** As outras quatro aventuras não foram tocadas |
+| V04 | HUD não cobre comando nem objetivo | **Feito e medido** em retrato; falta a composição própria de paisagem |
+| V05 | Não leitor entende a introdução | **Não.** A tela de apresentação (5.3) não existe |
+| V06 | Criança iniciante avança | **Não comprovado.** A assistência existe e foi medida no robô; o teste com a Sara não aconteceu |
+| V07 | Memória visível | **Não** |
+| V08 | Caça igual à referência | **Não.** Continua em câmera que gira dentro da sala, o que o documento proíbe |
+| V09 | Buraco não prende | **Feito** na Aventura 1 (o buraco virou piscina de bolinhas com trampolins) |
+| V10 | Moedas e dourados funcionam | **Feito** na Aventura 1, com rota provada nos três estilos |
+| V11 | Física e câmera confortáveis | **Feito** na Aventura 1 |
+| V12 | Loja consistente | **Parcial.** Experimentar não debita e a compra é única; mas as miniaturas são emoji, não o item renderizado — inclusive a saia aparece como vestido, o caso que o documento cita |
+| V13 | Construção persiste | **Não.** Meu Mundo só tem o terreno |
+| V14 | Progresso não duplica | **Feito**, com testes de migração |
+| V15 | Prêmios seguem simulados | **Feito** |
+| V16 | Texto completo | **Feito e medido** em 360x800, 390x844 e nas demais telas |
+| V17 | Desempenho utilizável | **Não medido** em aparelho real |
+
+### 5.3 Telas (seção 5)
+
+- **5.1 Abertura** — **não refeita.** Continua degradê com emoji espalhado, exatamente a
+  composição que o documento manda evitar.
+- **5.2 Mapa** — **não refeito.** É uma trilha de nós sobre degradê, com cadeado genérico;
+  o documento pede mapa ilustrado do parque com as atrações reconhecíveis e o ícone de cada
+  aventura representando o seu brinquedo.
+- **5.3 Entrada da aventura** — **não existe.**
+- **5.4 Tela de jogo** — **feita em retrato**; falta paisagem e as regiões protegidas dos
+  modos caça e memória, que dependem de refazer essas fases.
+- **5.5 Loja e conclusão** — **conclusão feita**; loja pendente nas miniaturas.
+
+### 5.4 Assistência (seção 6)
+
+Feito e medido: câmera automática, pulo automático nos pontos válidos, apoios largos,
+proteção de borda, coleta generosa, "Vamos juntos?" após duas tentativas conduzindo só o
+trecho motor, sem pressão de tempo na missão principal, e retorno que preserva itens.
+
+Falta: a alternativa **"Toque para ir"** (navegação assistida por pontos seguros) e a
+escolha do estilo poder ser **ouvida** antes de confirmar.
+
+### 5.5 Conteúdo (seções 8 a 10)
+
+- **A01** — núcleo pronto. Falta a **variação entre partidas** (lugar do ursinho, pistas e
+  mecanismo de acesso) que a seção 8 pede.
+- **A02, A03, A04, A05** — não refeitas.
+- **A06 "Quem é o Travesso?"** — não existe.
+- **Meu Mundo construível** (seção 9) — não existe; hoje é só terreno, e o jogo diz isso.
+- **Banco de falas e voz** (seção 10) — não existe; só texto e a leitura do aparelho.
+- **Entrega de arte** (seção 12) — nenhum dos arquivos da tabela foi produzido.
 
 ## 6. Identidade visual lida da prancha oficial (para a próxima etapa)
 
