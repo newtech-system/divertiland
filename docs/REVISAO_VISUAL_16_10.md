@@ -148,7 +148,7 @@ não cumpre o que o documento pede.
 
 | ID | O que exige | Situação |
 |---|---|---|
-| V01 | Mascotes reconhecíveis | **Parcial.** Rosto, orelha roxa, topete, tranças, figurino e tênis conferem com a prancha. Ainda é o boneco procedural: sem modelo/rig/animações de produção, sem PNG de corpo inteiro nem de rosto, sem vista de costas aprovada. Três desvios visíveis: fones na cabeça e não no pescoço, o "d" flutua como plaquinha em vez de estampa na camiseta, e o acabamento roxo da jaqueta quase não aparece |
+| V01 | Mascotes reconhecíveis | **Parcial.** Em 20/10 os três desvios foram corrigidos (fone no pescoço, "d" como estampa da camiseta pela abertura da jaqueta, acabamento roxo visível) e a trança da Mina deixou de parecer bolinhas empilhadas. Ainda é o boneco procedural: sem modelo/rig/animações de produção, sem PNG de 2048 px nem de rosto, sem vista de costas aprovada. A prancha não estava no computador nesta rodada, então a conferência foi contra o TEXTO das seções 3.1 e 3.2, não pixel a pixel |
 | V02 | Parque reconhecível | **Parcial.** Só a Aventura 1, e só em parte dela: piso claro, teto escuro, murais de galáxia e neon, estrutura verde, redes pretas, tubo verde e os dois escorregadores. Entrada, praça e Recanto continuam com a paleta antiga de doces |
 | V03 | Fases distintas | **Não.** As outras quatro aventuras não foram tocadas |
 | V04 | HUD não cobre comando nem objetivo | **Feito e medido** em retrato; falta a composição própria de paisagem |
@@ -168,11 +168,14 @@ não cumpre o que o documento pede.
 
 ### 5.3 Telas (seção 5)
 
-- **5.1 Abertura** — **não refeita.** Continua degradê com emoji espalhado, exatamente a
-  composição que o documento manda evitar.
-- **5.2 Mapa** — **não refeito.** É uma trilha de nós sobre degradê, com cadeado genérico;
-  o documento pede mapa ilustrado do parque com as atrações reconhecíveis e o ícone de cada
-  aventura representando o seu brinquedo.
+- **5.1 Abertura** — **refeita em 20/10.** Parede escura com a pintura de galáxia (a mesma
+  do jogo), estrutura verde com redes, tubo, escorregadores azul e amarelo, piso claro e
+  piscina de bolinhas; Jhow e Mina de corpo inteiro em pé no piso. Nenhuma fase é carregada
+  para abrir o menu. Medido sem problemas nos cinco tamanhos.
+- **5.2 Mapa** — **refeito em 20/10.** Chão do parque desenhado, brinquedos ao longo do
+  caminho, o ícone de cada aventura virou o brinquedo dela (vindo dos dados), nome curto só
+  na aventura da vez, carteira e coleção num painel próprio e bloqueio explicado em voz.
+  Falta: a planta do parque com os setores nomeados, quando houver arte de produção.
 - **5.3 Entrada da aventura** — **não existe.**
 - **5.4 Tela de jogo** — **feita em retrato**; falta paisagem e as regiões protegidas dos
   modos caça e memória, que dependem de refazer essas fases.
