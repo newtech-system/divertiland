@@ -320,9 +320,20 @@ export async function viewCheck(
     if (!L?.dev?.viewObstructions) continue;
     for (const cp of L.dev.checkpoints() as string[]) {
       L.dev.teleportTo(cp);
-      // Alguns quadros para a câmera assentar e o fade reagir.
-      for (let i = 0; i < 40; i++) {
+      // A câmera ANDA até o novo lugar; num salto de ponta a ponta da fase ela leva
+      // bem mais que os 40 quadros que havia aqui. Medir antes de ela chegar fazia o
+      // raio atravessar meia fase e acusar paredes a 60, 100, 160 metros — o relatório
+      // mudava a cada rodada. Agora espera a câmera chegar perto da criança.
+      // A fase não avança enquanto estiver em pausa — e o jogo pausa sozinho quando a
+      // janela perde o foco. Sem isto, os quadros abaixo não rodavam, a câmera ficava
+      // onde estava e a medida saía de um lugar que a criança nem está olhando.
+      for (let i = 0; i < 400 && !L.dev.cameraPerto(); i++) {
+        game.closePause();
         L.update(1 / 60);
+      }
+      if (!L.dev.cameraPerto()) {
+        report[`${id}/${cp}`] = [{ label: 'câmera não assentou — medida descartada', dist: 0, opacity: 0 }];
+        continue;
       }
       const bad = L.dev.viewObstructions();
       if (bad.length) report[`${id}/${cp}`] = bad;

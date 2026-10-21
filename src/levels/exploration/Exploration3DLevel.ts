@@ -988,6 +988,11 @@ export class Exploration3DLevel implements LevelRuntime {
       this.controller.teleport({ x: cp.pos.x, y: cp.pos.y + 0.5, z: cp.pos.z + 1 }, cp.yaw);
       this.cam.snapBehind(cp.yaw);
     },
+    /** A câmera já chegou atrás da criança? Antes disso a medida de visão não vale. */
+    cameraPerto: () => {
+      const p = this.controller.position;
+      return this.camera.position.distanceTo(new THREE.Vector3(p.x, p.y + 1.1, p.z)) < 12;
+    },
     /**
      * QA da seção 7.2: olhando de onde a criança está, algum enfeite/placa/bandeira
      * continua OPACO entre a câmera e o que ela precisa ver? Devolve os culpados.
@@ -1009,6 +1014,9 @@ export class Exploration3DLevel implements LevelRuntime {
         ray.far = len;
         for (const hit of ray.intersectObjects(objs, true)) {
           const f = this.lvl.fadeables.find((x) => hit.object === x.object || x.object.children.includes(hit.object as never));
+          // O enfeite que está AOS PÉS da criança (a bandeirinha do próprio ponto
+          // seguro, por exemplo) não está tapando o que vem pela frente.
+          if (f && Math.hypot(f.object.position.x - p.x, f.object.position.z - p.z) < 2) continue;
           const op = f ? 1 - f.faded * 0.82 : 1;
           if (op > 0.5) bad.push({ label: hit.object.name || hit.object.type, dist: +hit.distance.toFixed(2), opacity: +op.toFixed(2) });
         }

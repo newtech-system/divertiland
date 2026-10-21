@@ -258,7 +258,18 @@ export function textTexture(
     ctx.fillStyle = opts.bg;
     ctx.fillRect(0, 0, w, h);
   }
-  ctx.font = `700 ${opts.font ?? 150}px Fredoka, "Baloo 2", system-ui, sans-serif`;
+  // O texto ENCOLHE até caber na placa. Sem isso um nome comprido passava da borda do
+  // canvas e saía cortado — era o caso do "TÚNEL MALUCO", citado pelo documento (V16).
+  const lines0 = text.split('\n');
+  let tam = opts.font ?? 150;
+  const fonte = (px: number) => `700 ${px}px Fredoka, "Baloo 2", system-ui, sans-serif`;
+  ctx.font = fonte(tam);
+  const maior = Math.max(...lines0.map((l) => ctx.measureText(l).width), 1);
+  const cabe = w * 0.92;
+  if (maior > cabe) {
+    tam = Math.max(12, Math.floor(tam * (cabe / maior)));
+    ctx.font = fonte(tam);
+  }
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   if (opts.glow) {
@@ -266,8 +277,8 @@ export function textTexture(
     ctx.shadowBlur = 30;
   }
   ctx.fillStyle = opts.color ?? '#fff';
-  const lines = text.split('\n');
-  const lh = (opts.font ?? 150) * 1.05;
+  const lines = lines0;
+  const lh = tam * 1.05;
   lines.forEach((ln, i) => ctx.fillText(ln, w / 2, h / 2 + (i - (lines.length - 1) / 2) * lh));
   if (opts.glow) ctx.fillText(text.includes('\n') ? '' : text, w / 2, h / 2);
   const tex = new THREE.CanvasTexture(canvas);

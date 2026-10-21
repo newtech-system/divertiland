@@ -566,7 +566,10 @@ export const LEVEL_A01: LevelLayout = {
   id: 'a01',
   spawn: { pos: [0, 0, -3], yaw: 0 },
   killY: -6,
-  environment: { background: '#cdb6ff', fog: '#e7dbff', fogNear: 30, fogFar: 95 },
+  // O fundo e a bruma eram lilás de doce e tingiam o setor inteiro: era o que mais
+  // puxava a fase para longe das fotos. Agora são os tons escuros do parque, e a bruma
+  // começa mais longe para as moedas de perto continuarem douradas e nítidas.
+  environment: { background: '#171041', fog: '#241a55', fogNear: 34, fogFar: 110 },
   music: 'world1',
   entities: E,
 };
