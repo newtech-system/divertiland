@@ -149,7 +149,7 @@ não cumpre o que o documento pede.
 | ID | O que exige | Situação |
 |---|---|---|
 | V01 | Mascotes reconhecíveis | **Parcial.** Em 20/10 os três desvios foram corrigidos (fone no pescoço, "d" como estampa da camiseta pela abertura da jaqueta, acabamento roxo visível) e a trança da Mina deixou de parecer bolinhas empilhadas. Ainda é o boneco procedural: sem modelo/rig/animações de produção, sem PNG de 2048 px nem de rosto, sem vista de costas aprovada. A prancha não estava no computador nesta rodada, então a conferência foi contra o TEXTO das seções 3.1 e 3.2, não pixel a pixel |
-| V02 | Parque reconhecível | **Parcial.** Só a Aventura 1, e só em parte dela: piso claro, teto escuro, murais de galáxia e neon, estrutura verde, redes pretas, tubo verde e os dois escorregadores. Entrada, praça e Recanto continuam com a paleta antiga de doces |
+| V02 | Parque reconhecível | **Feito na Aventura 1** (20/10). Piso claro, teto e paredes escuros, murais de galáxia e grafismo neon, estrutura verde-clara, redes pretas, tubo verde, os dois escorregadores paralelos e a piscina de bolinhas. O percurso inteiro foi passado para a paleta do parque: corredor, túnel, paredão dos dois caminhos e sala secreta. **Falta nas outras quatro aventuras** |
 | V03 | Fases distintas | **Não.** As outras quatro aventuras não foram tocadas |
 | V04 | HUD não cobre comando nem objetivo | **Feito e medido** em retrato; falta a composição própria de paisagem |
 | V05 | Não leitor entende a introdução | **Não.** A tela de apresentação (5.3) não existe |
@@ -192,7 +192,8 @@ escolha do estilo poder ser **ouvida** antes de confirmar.
 
 ### 5.5 Conteúdo (seções 8 a 10)
 
-- **A01** — núcleo pronto. Falta a **variação entre partidas** (lugar do ursinho, pistas e
+- **A01** — núcleo pronto e, desde 20/10, com o percurso inteiro na paleta do parque.
+  Falta a **variação entre partidas** (lugar do ursinho, pistas e
   mecanismo de acesso) que a seção 8 pede.
 - **A02, A03, A04, A05** — não refeitas.
 - **A06 "Quem é o Travesso?"** — não existe.
