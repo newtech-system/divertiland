@@ -166,6 +166,25 @@ não cumpre o que o documento pede.
 | V16 | Texto completo | **Feito e medido** em 360x800, 390x844 e nas demais telas |
 | V17 | Desempenho utilizável | **Não medido** em aparelho real |
 
+### 5.2.1 Correção importante na forma de medir (20/10)
+
+A checagem de visão (`__viewCheck`), que eu vinha citando como prova de que nenhum
+enfeite tapa o caminho, **estava medindo errado**:
+
+- a fase não avança em pausa, e o jogo pausa sozinho quando a janela perde o foco. Os
+  quadros que o teste mandava rodar não rodavam, a câmera ficava onde estava e o raio
+  saía de um lugar onde a criança não está. Por isso o mesmo teste dizia "parede a 160
+  metros" numa rodada e "limpo" na seguinte;
+- depois de um salto de ponta a ponta da fase, a câmera leva bem mais que os 40 quadros
+  que o teste esperava;
+- o enfeite aos pés da criança — a bandeirinha do próprio ponto seguro — era contado
+  como obstáculo.
+
+Corrigido: o teste tira a pausa, **espera a câmera chegar perto da criança**, descarta a
+medida se ela não chegar, e ignora o que está aos pés dela. Duas rodadas seguidas depois
+disso: **zero obstruções nas 7 fases e em todos os pontos seguros**. Esta é a primeira
+medida dessa checagem em que dá para confiar; as anteriores valem menos do que eu disse.
+
 ### 5.3 Telas (seção 5)
 
 - **5.1 Abertura** — **refeita em 20/10.** Parede escura com a pintura de galáxia (a mesma
