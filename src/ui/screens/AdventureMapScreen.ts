@@ -308,7 +308,7 @@ export class AdventureMapScreen extends Screen {
     const all = ADVENTURES.every((a) => s.adventures.progress(a.id).completed);
     return [
       // x entre 20 e 80: mais para a borda, a plaquinha do nome sai da tela no celular.
-      { levelId: 'w1_l06', x: 20, y: 1.9, open: a02, need: 'Termine a Aventura 2' },
+      { levelId: 'w1_l06', x: 76, y: 1.2, open: a02, need: 'Termine a Aventura 2' },
       { levelId: 'w1_l10', x: 80, y: 3.2, open: all, need: 'Termine as 5 aventuras' },
     ];
   }
