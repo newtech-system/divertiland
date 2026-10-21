@@ -24,7 +24,7 @@ export interface MapEnterOptions {
 const STEP = 168;
 /** Lugar de cada baú no mapa das aventuras (o mapa antigo tinha dez fases). */
 const CHEST_POS: Record<string, { x: number; y: number }> = {
-  w1_chest_1: { x: 58, y: 1.0 },
+  w1_chest_1: { x: 54, y: 0.9 },
   w1_chest_2: { x: 46, y: 2.4 },
   w1_chest_3: { x: 24, y: 4.4 },
 };
@@ -55,7 +55,9 @@ export class AdventureMapScreen extends Screen {
     const g = this.game;
     const s = g.services;
     const p = g.profile!;
-    const maxY = Math.max(...ADVENTURES.map((a) => a.map.y), 4);
+    // A altura do mundo conta também os desafios bônus: senão o nó mais alto fica
+    // para fora da área rolável e aparece cortado.
+    const maxY = Math.max(...ADVENTURES.map((a) => a.map.y), ...this.bonusNodes().map((b) => b.y), 4);
     const height = PAD_BOTTOM + maxY * STEP + PAD_TOP;
     const posOf = (x: number, y: number) => ({ left: x, bottom: PAD_BOTTOM + y * STEP });
 
@@ -307,9 +309,11 @@ export class AdventureMapScreen extends Screen {
     const a02 = s.adventures.progress('a02').completed;
     const all = ADVENTURES.every((a) => s.adventures.progress(a.id).completed);
     return [
-      // x entre 20 e 80: mais para a borda, a plaquinha do nome sai da tela no celular.
-      { levelId: 'w1_l06', x: 76, y: 1.2, open: a02, need: 'Termine a Aventura 2' },
-      { levelId: 'w1_l10', x: 80, y: 3.2, open: all, need: 'Termine as 5 aventuras' },
+      // x entre 20 e 80 (fora disso a plaquinha do nome sai da tela no celular) e pelo
+      // menos uma etapa inteira de distância das aventuras, do Meu Mundo e dos baús:
+      // medido, qualquer coisa mais perto se sobrepõe no celular.
+      { levelId: 'w1_l06', x: 20, y: 2.0, open: a02, need: 'Termine a Aventura 2' },
+      { levelId: 'w1_l10', x: 80, y: 5.2, open: all, need: 'Termine as 5 aventuras' },
     ];
   }
 

@@ -83,7 +83,9 @@ export const ITEMS: ItemDef[] = [
   { id: 'feet_turquoise', name: 'Tênis Turquesa', icon: '👟', slot: 'feet', category: 'clothes', price: 0, acquire: D, visual: { kind: 'sneakers', colors: ['#1fd6c9', '#ffffff'] } },
   { id: 'ears_headphones_black', name: 'Headphone Preto', icon: '🎧', slot: 'ears', category: 'accessories', price: 0, acquire: D, visual: { kind: 'headphones', colors: ['#1d1d24', '#8b3cff'] } },
   // Colete da Mina: rosa → magenta com acabamento roxo, sobre camiseta branca (prancha).
-  { id: 'top_mina_outfit', name: 'Colete da Mina', icon: '👚', slot: 'top', category: 'clothes', price: 0, acquire: D, characters: ['mina'], visual: { kind: 'hoodie', colors: ['#ff4fa3', '#c04fd8', '#7b3fc4', '#ffffff'] } },
+  // A quinta cor é a do "d" da camiseta. Na prancha o da Mina é ROSA, e não roxo
+  // como o do Jhow — sem ela os dois saíam iguais.
+  { id: 'top_mina_outfit', name: 'Colete da Mina', icon: '👚', slot: 'top', category: 'clothes', price: 0, acquire: D, characters: ['mina'], visual: { kind: 'hoodie', colors: ['#ff4fa3', '#c04fd8', '#7b3fc4', '#ffffff', '#ff2d8f'] } },
   // Saia pregueada rosa → roxo (prancha). A miniatura da loja usa saia, não vestido.
   { id: 'bottom_mina_skirt', name: 'Saia Pregueada', icon: '👗', slot: 'bottom', category: 'clothes', price: 0, acquire: D, visual: { kind: 'skirt', colors: ['#ff4fa3', '#a14dd8'] } },
   // A terceira cor é a meia clara da Mina (3.2: "meias claras com detalhes rosa").

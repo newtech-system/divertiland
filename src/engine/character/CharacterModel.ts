@@ -319,7 +319,7 @@ export class CharacterModel {
           // animado não respeita transparência de textura.
           const estampa = new THREE.Mesh(
             frente(0.303, 0.327, 0.17, 0.3),
-            toon('#ffffff', { map: textTexture('d', { color: c[2] ?? '#7b3fc4', font: 190, width: 256, height: 256, bg: '#ffffff' }) }),
+            toon('#ffffff', { map: textTexture('d', { color: c[4] ?? c[2] ?? '#7b3fc4', font: 190, width: 256, height: 256, bg: '#ffffff' }) }),
           );
           estampa.position.y = 0.3;
           estampa.scale.z = 0.86;
