@@ -141,9 +141,11 @@ msg('m_move', [-6, 0, -6], [6, 3, 3], 'Use as setas, WASD ou o joystick para and
 });
 
 // ============================================================ B — CORREDOR
-wallX(-3.5, 10, 30, 0, H, PALETTE.purpleLight);
-wallX(3.5, 10, 20, 0, H, PALETTE.purpleLight);
-wallX(3.5, 24, 30, 0, H, PALETTE.purpleLight);
+// As paredes do corredor acompanham o parque: escuras, para o caminho claro e as
+// moedas douradas se destacarem (seção 4 do prompt de 16/10).
+wallX(-3.5, 10, 30, 0, H, WALL2);
+wallX(3.5, 10, 20, 0, H, WALL2);
+wallX(3.5, 24, 30, 0, H, WALL2);
 wallX(7.5, 19.75, 24.25, 0, H, WALL2);
 wallZ(20, 3.5, 7.5, 0, H, WALL2);
 wallZ(24, 3.5, 7.5, 0, H, WALL2);
@@ -179,9 +181,11 @@ msg('m_jump', [-6, 0, 30.2], [6, 3, 32.4], 'Aperte ESPAÇO ou o botão de pulo p
 
 // ============================================================ D — TÚNEL (fim da etapa 1)
 add(
-  { t: 'box', min: [-6, 0, 40], max: [-1.75, 5, 54], color: PALETTE.purple },
-  { t: 'box', min: [1.75, 0, 40], max: [6, 5, 54], color: PALETTE.pink },
-  { t: 'box', min: [-1.75, 3.6, 40], max: [1.75, 5, 54], color: PALETTE.yellow },
+  // Blocos que seguram o tubo: viram a estrutura verde-clara do brinquedão, como nas
+  // fotos. O tubo em si já é verde.
+  { t: 'box', min: [-6, 0, 40], max: [-1.75, 5, 54], color: ESTRUTURA },
+  { t: 'box', min: [1.75, 0, 40], max: [6, 5, 54], color: ESTRUTURA },
+  { t: 'box', min: [-1.75, 3.6, 40], max: [1.75, 5, 54], color: ESTRUTURA },
   {
     t: 'tunnel',
     start: [0, 0, 40],
@@ -317,7 +321,9 @@ add(
   // B07: placas nas paredes laterais, viradas para quem chega, acima da linha do salto.
   { t: 'sign', pos: [8.7, 7.6, 112], yaw: -Math.PI / 2, text: '⬅️ Plataformas: 1 pista + 1 peça', color: PALETTE.orange, w: 3.4, h: 1 },
   { t: 'sign', pos: [-8.7, 7.6, 112], yaw: Math.PI / 2, text: 'Portinha: 1 pista ➡️', color: PALETTE.green, w: 3.4, h: 1 },
-  { t: 'box', min: [-4, 0, 110], max: [2.6, 7.5, 134], color: PALETTE.purpleLight },
+  // Paredão que separa os dois caminhos: escuro, para as duas passarelas claras
+  // ficarem visíveis contra ele.
+  { t: 'box', min: [-4, 0, 110], max: [2.6, 7.5, 134], color: WALL2 },
   { t: 'decor', kind: 'neonSign', pos: [-0.7, 9, 110.1], yaw: Math.PI, text: 'DOIS CAMINHOS', color: PALETTE.yellow, size: 0.7 },
   // --- Caminho tranquilo (-X): passarela com botão, portão, cortina secreta e o Beto
   { t: 'box', min: [-9, 0, 110], max: [-4, 4, 134], color: PALETTE.green },
@@ -329,10 +335,10 @@ add(
   { t: 'curtain', min: [-9.2, 4, 124], max: [-8.8, 7, 128] },
   // --- SALA SECRETA (a mesma do protótipo, agora com um desafio próprio)
   { t: 'box', min: [-15, 0, 121], max: [-9, 4, 131], color: PALETTE.yellow },
-  { t: 'box', min: [-15.5, 4, 121], max: [-15, 9, 131], style: 'wall', color: PALETTE.pinkLight },
-  { t: 'box', min: [-15, 4, 120.5], max: [-9, 9, 121], style: 'wall', color: PALETTE.pinkLight },
-  { t: 'box', min: [-15, 4, 131], max: [-9, 9, 131.5], style: 'wall', color: PALETTE.pinkLight },
-  { t: 'box', min: [-15, 9, 120.5], max: [-9, 9.4, 131.5], style: 'wall', color: PALETTE.purple, camera: false },
+  { t: 'box', min: [-15.5, 4, 121], max: [-15, 9, 131], style: 'wall', color: WALL2 },
+  { t: 'box', min: [-15, 4, 120.5], max: [-9, 9, 121], style: 'wall', color: WALL2 },
+  { t: 'box', min: [-15, 4, 131], max: [-9, 9, 131.5], style: 'wall', color: WALL2 },
+  { t: 'box', min: [-15, 9, 120.5], max: [-9, 9.4, 131.5], style: 'wall', color: '#0d0a22', camera: false },
   { t: 'secretZone', id: 'a01_sala_secreta', min: [-14.5, 4, 121.5], max: [-9.6, 8, 130.5] },
   { t: 'decor', kind: 'neonSign', pos: [-14.8, 7.3, 126], yaw: Math.PI / 2, text: 'SALA SECRETA', color: PALETTE.pink, size: 0.6 },
   // desafio da sala secreta: subir pelas plataformas e pelo trampolim até as gemas
